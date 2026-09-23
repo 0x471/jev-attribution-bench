@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://claim-ledger.dev/schemas/review-manifest-v0.json",
+  "title": "Claim Ledger Review Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reviewId",
+    "createdAt",
+    "document",
+    "sources",
+    "claims",
+    "evidenceRelations",
+    "argumentEdges",
+    "reviewActions",
+    "toolchain"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "0.1.0" },
+    "reviewId": { "$ref": "#/$defs/id" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "document": { "$ref": "#/$defs/artifact" },
+    "sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" },
+      "uniqueItems": true
+    },
+    "claims": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/claim" }
+    },
+    "evidenceRelations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidenceRelation" }
+    },
+    "argumentEdges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/argumentEdge" }
+    },
+    "reviewActions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/reviewAction" }
+    },
+    "certification": {
+      "oneOf": [
+        { "$ref": "#/$defs/certification" },
+        { "type": "null" }
+      ]
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimLedgerVersion", "nodeVersion"],
+      "properties": {
+        "claimLedgerVersion": { "type": "string", "minLength": 1 },
+        "nodeVersion": { "type": "string", "minLength": 1 },
+        "sdkVersion": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "start", "end", "textSha256"],
+      "properties": {
+        "artifactId": { "$ref": "#/$defs/id" },
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 1 },
+        "page": { "type": ["integer", "null"], "minimum": 1 },
+        "paragraph": { "type": ["integer", "null"], "minimum": 1 },
+        "textSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "name", "mediaType", "byteLength", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "role": { "enum": ["document", "source"] },
+        "name": { "type": "string", "minLength": 1 },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "byteLength": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "extractor": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" },
+            "warnings": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "origin", "kind", "proposedBy"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "text": { "type": "string", "minLength": 1 },
+        "origin": { "$ref": "#/$defs/anchor" },
+        "kind": { "enum": ["stated", "implicit-premise"] },
+        "proposedBy": { "enum": ["human", "model"] },
+        "proposalModel": { "type": ["string", "null"] }
+      }
+    },
+    "evidenceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "anchor"],
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "anchor": { "$ref": "#/$defs/anchor" }
+      }
+    },
+    "automatedAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation",
+        "exactMatch",
+        "requestedModel",
+        "resolvedModel",
+        "rubricVersion",
+        "inputSha256",
+        "runAt"
+      ],
+      "properties": {
+        "relation": { "enum": ["supports", "contradicts", "says_nothing", "fabricated"] },
+        "exactMatch": { "type": "boolean" },
+        "requestedModel": { "type": ["string", "null"] },
+        "resolvedModel": { "type": ["string", "null"] },
+        "rubricVersion": { "type": "string", "minLength": 1 },
+        "inputSha256": { "$ref": "#/$defs/sha256" },
+        "probabilities": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "supports": { "type": "number", "minimum": 0, "maximum": 1 },
+            "contradicts": { "type": "number", "minimum": 0, "maximum": 1 },
+            "says_nothing": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "required": ["supports", "contradicts", "says_nothing"]
+        },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "inputTokens": { "type": ["integer", "null"], "minimum": 0 },
+        "runAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "evidenceRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "claimId", "evidence", "assessment"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "claimId": { "$ref": "#/$defs/id" },
+        "evidence": { "$ref": "#/$defs/evidenceSpan" },
+        "assessment": { "$ref": "#/$defs/automatedAssessment" }
+      }
+    },
+    "argumentEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fromClaimId", "toClaimId", "relation", "proposedBy"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "fromClaimId": { "$ref": "#/$defs/id" },
+        "toClaimId": { "$ref": "#/$defs/id" },
+        "relation": { "enum": ["requires", "supports", "rebuts", "qualifies"] },
+        "proposedBy": { "enum": ["human", "model"] }
+      }
+    },
+    "reviewAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "subjectType",
+        "subjectId",
+        "decision",
+        "reviewer",
+        "at",
+        "boundDocumentSha256",
+        "boundSourceSha256s"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "subjectType": { "enum": ["claim", "evidence-relation", "argument-edge", "document"] },
+        "subjectId": { "$ref": "#/$defs/id" },
+        "decision": { "enum": ["approve", "reject", "waive"] },
+        "reason": { "type": ["string", "null"] },
+        "reviewer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["displayName", "identityAssurance"],
+          "properties": {
+            "displayName": { "type": "string", "minLength": 1 },
+            "identityAssurance": { "enum": ["self-asserted", "authenticated", "signed"] },
+            "providerSubject": { "type": ["string", "null"] }
+          }
+        },
+        "at": { "type": "string", "format": "date-time" },
+        "boundDocumentSha256": { "$ref": "#/$defs/sha256" },
+        "boundSourceSha256s": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sha256" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "certification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewActionId", "manifestSha256", "scope"],
+      "properties": {
+        "reviewActionId": { "$ref": "#/$defs/id" },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "scope": {
+          "const": "The reviewer completed the recorded review actions for the exact artifact versions in this manifest."
+        }
+      }
+    }
+  }
+}

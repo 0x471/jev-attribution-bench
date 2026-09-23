@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "0.1.0",
+  "reviewId": "review-demo-001",
+  "createdAt": "2026-09-23T09:00:00Z",
+  "document": {
+    "id": "document-demo-v1",
+    "role": "document",
+    "name": "termination-memo.md",
+    "mediaType": "text/markdown",
+    "byteLength": 1024,
+    "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "sources": [
+    {
+      "id": "source-agreement-v1",
+      "role": "source",
+      "name": "services-agreement.md",
+      "mediaType": "text/markdown",
+      "byteLength": 4096,
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-001",
+      "text": "The agreement permits recovery of documented non-cancellable costs.",
+      "origin": {
+        "artifactId": "document-demo-v1",
+        "start": 128,
+        "end": 198,
+        "page": null,
+        "paragraph": 3,
+        "textSha256": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "kind": "stated",
+      "proposedBy": "human",
+      "proposalModel": null
+    }
+  ],
+  "evidenceRelations": [
+    {
+      "id": "relation-001",
+      "claimId": "claim-001",
+      "evidence": {
+        "text": "Northstar may recover documented, non-cancellable costs directly incurred before the effective date.",
+        "anchor": {
+          "artifactId": "source-agreement-v1",
+          "start": 2010,
+          "end": 2111,
+          "page": null,
+          "paragraph": 42,
+          "textSha256": "4444444444444444444444444444444444444444444444444444444444444444"
+        }
+      },
+      "assessment": {
+        "relation": "supports",
+        "exactMatch": true,
+        "requestedModel": "jev-1.13.0",
+        "resolvedModel": "jev-1.13.0",
+        "rubricVersion": "evidence-relation-v1",
+        "inputSha256": "5555555555555555555555555555555555555555555555555555555555555555",
+        "probabilities": {
+          "supports": 0.96,
+          "contradicts": 0.01,
+          "says_nothing": 0.03
+        },
+        "confidence": 0.94,
+        "inputTokens": 214,
+        "runAt": "2026-09-23T08:55:00Z"
+      }
+    }
+  ],
+  "argumentEdges": [],
+  "reviewActions": [],
+  "certification": null,
+  "toolchain": {
+    "claimLedgerVersion": "0.0.0",
+    "nodeVersion": "22.22.0",
+    "sdkVersion": "0.6.0"
+  }
+}
