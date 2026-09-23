@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "0.1.0",
+  "reviewId": "review-demo-001",
+  "publication": {
+    "fixture": true,
+    "containsSensitiveData": false
+  },
+  "document": {
+    "id": "document-demo-v1",
+    "path": "draft.md",
+    "mediaType": "text/markdown"
+  },
+  "sources": [
+    {
+      "id": "source-agreement-v1",
+      "path": "source.md",
+      "mediaType": "text/markdown"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-notice",
+      "text": "The agreement permits either party to terminate on thirty days' written notice.",
+      "originText": "The agreement permits either party to terminate on thirty days' written notice.",
+      "kind": "stated",
+      "proposedBy": "human",
+      "proposalModel": null,
+      "evidence": [
+        {
+          "id": "relation-notice",
+          "sourceId": "source-agreement-v1",
+          "quote": "Either party may terminate this agreement by giving thirty days' written notice."
+        }
+      ]
+    },
+    {
+      "id": "claim-costs",
+      "text": "Northstar may recover documented non-cancellable costs incurred before termination takes effect.",
+      "originText": "Northstar may recover documented non-cancellable costs incurred before termination takes effect.",
+      "kind": "stated",
+      "proposedBy": "human",
+      "proposalModel": null,
+      "evidence": [
+        {
+          "id": "relation-costs",
+          "sourceId": "source-agreement-v1",
+          "quote": "On termination, Northstar may recover documented, non-cancellable costs directly incurred before the effective date."
+        }
+      ]
+    }
+  ],
+  "argumentEdges": [
+    {
+      "id": "edge-notice-qualifies-costs",
+      "fromClaimId": "claim-notice",
+      "toClaimId": "claim-costs",
+      "relation": "qualifies",
+      "proposedBy": "human"
+    }
+  ]
+}

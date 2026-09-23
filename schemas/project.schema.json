@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://claim-ledger.dev/schemas/project-v0.json",
+  "title": "Claim Ledger Project",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "reviewId",
+    "publication",
+    "document",
+    "sources",
+    "claims",
+    "argumentEdges"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "0.1.0" },
+    "reviewId": { "$ref": "#/$defs/id" },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fixture", "containsSensitiveData"],
+      "properties": {
+        "fixture": { "type": "boolean" },
+        "containsSensitiveData": { "type": "boolean" }
+      }
+    },
+    "document": { "$ref": "#/$defs/artifactInput" },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifactInput" }
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/claimInput" }
+    },
+    "argumentEdges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/argumentEdge" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$"
+    },
+    "artifactInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "mediaType"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "path": { "type": "string", "minLength": 1 },
+        "mediaType": { "enum": ["text/plain", "text/markdown"] }
+      }
+    },
+    "evidenceInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sourceId", "quote"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "sourceId": { "$ref": "#/$defs/id" },
+        "quote": { "type": "string", "minLength": 1 }
+      }
+    },
+    "claimInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text",
+        "originText",
+        "kind",
+        "proposedBy",
+        "proposalModel",
+        "evidence"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "text": { "type": "string", "minLength": 1 },
+        "originText": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["stated", "implicit-premise"] },
+        "proposedBy": { "const": "human" },
+        "proposalModel": { "type": "null" },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidenceInput" }
+        }
+      }
+    },
+    "argumentEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fromClaimId", "toClaimId", "relation", "proposedBy"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "fromClaimId": { "$ref": "#/$defs/id" },
+        "toClaimId": { "$ref": "#/$defs/id" },
+        "relation": { "enum": ["requires", "supports", "rebuts", "qualifies"] },
+        "proposedBy": { "const": "human" }
+      }
+    }
+  }
+}
+

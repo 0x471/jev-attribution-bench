@@ -1,0 +1,24 @@
+{
+  "relation-potassium": {
+    "relation": "supports",
+    "probabilities": {
+      "supports": 0.96,
+      "contradicts": 0.01,
+      "says_nothing": 0.03
+    },
+    "confidence": 0.93,
+    "inputTokens": 48,
+    "outputTokens": 3
+  },
+  "relation-urgent-review": {
+    "relation": "supports",
+    "probabilities": {
+      "supports": 0.98,
+      "contradicts": 0.01,
+      "says_nothing": 0.01
+    },
+    "confidence": 0.97,
+    "inputTokens": 51,
+    "outputTokens": 3
+  }
+}

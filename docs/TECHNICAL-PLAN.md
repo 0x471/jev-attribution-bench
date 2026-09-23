@@ -92,6 +92,10 @@ code, a later generative adapter, or explicit human judgment.
 
 ## 6. Delivery sequence
 
+Implementation status is tracked in `IMPLEMENTATION-STATUS.md`. Milestones 0 and 1 are complete;
+the offline and adapter portions of Milestone 2 are complete. A live model run and the controlled
+experiment remain gated on the external decisions listed there.
+
 ### Milestone 0 — foundation review
 
 Deliverables:
@@ -136,7 +140,7 @@ Required behavior:
 - timeout, retry, rate-limit, and cancellation handling;
 - content-addressed cache keyed by state, rubric, SDK, and model versions;
 - explicit offline fixture adapter for tests and the Pages demo;
-- per-run token and estimated-cost accounting;
+- per-run input/output-token accounting; dollar cost only if a reviewed pricing source is added;
 - no source text or credentials in logs;
 - a review queue for every automated assessment.
 

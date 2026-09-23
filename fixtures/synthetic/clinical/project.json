@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "0.1.0",
+  "reviewId": "review-clinical-demo-001",
+  "publication": {
+    "fixture": true,
+    "containsSensitiveData": false
+  },
+  "document": {
+    "id": "clinical-note-v1",
+    "path": "draft.md",
+    "mediaType": "text/markdown"
+  },
+  "sources": [
+    {
+      "id": "monitoring-protocol-v1",
+      "path": "source.md",
+      "mediaType": "text/markdown"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-potassium",
+      "text": "After increasing the dose, check serum potassium within seven days.",
+      "originText": "After increasing the dose, check serum potassium within seven days.",
+      "kind": "stated",
+      "proposedBy": "human",
+      "proposalModel": null,
+      "evidence": [
+        {
+          "id": "relation-potassium",
+          "sourceId": "monitoring-protocol-v1",
+          "quote": "Measure serum potassium no later than seven days after any dose increase."
+        }
+      ]
+    },
+    {
+      "id": "claim-urgent-review",
+      "text": "Urgent clinical review is required if the patient develops severe weakness or an irregular heartbeat.",
+      "originText": "Urgent clinical review is required if the patient develops severe weakness or an irregular heartbeat.",
+      "kind": "stated",
+      "proposedBy": "human",
+      "proposalModel": null,
+      "evidence": [
+        {
+          "id": "relation-urgent-review",
+          "sourceId": "monitoring-protocol-v1",
+          "quote": "Arrange urgent clinical review when severe weakness or an irregular heartbeat occurs."
+        }
+      ]
+    }
+  ],
+  "argumentEdges": []
+}

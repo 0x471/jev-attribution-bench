@@ -1,0 +1,184 @@
+import { randomUUID } from "node:crypto";
+
+import { sha256 } from "./artifacts.js";
+import {
+  canonicalJson,
+  type Certification,
+  type ReviewAction,
+  type ReviewDecision,
+  type Reviewer,
+  type ReviewManifest,
+  type ReviewSubjectType,
+} from "./manifest.js";
+
+export interface RecordActionInput {
+  subjectType: ReviewSubjectType;
+  subjectId: string;
+  decision: ReviewDecision;
+  reason: string | null;
+  reviewer: Reviewer;
+}
+
+export interface ReviewLedgerOptions {
+  now?: () => Date;
+  createId?: () => string;
+}
+
+export type CertificationStatus =
+  | { valid: true }
+  | {
+      valid: false;
+      reason:
+        | "not-certified"
+        | "artifact-changed"
+        | "review-state-changed"
+        | "certification-action-missing";
+    };
+
+function sourceDigests(manifest: ReviewManifest): string[] {
+  return manifest.sources.map((source) => source.sha256).sort();
+}
+
+function sameStrings(left: string[], right: string[]): boolean {
+  return JSON.stringify([...left].sort()) === JSON.stringify([...right].sort());
+}
+
+function reviewState(manifest: ReviewManifest): Omit<ReviewManifest, "certification"> {
+  const { certification: _, ...state } = manifest;
+  return state;
+}
+
+export function reviewStateDigest(manifest: ReviewManifest): string {
+  return sha256(canonicalJson(reviewState(manifest)));
+}
+
+function subjectExists(
+  manifest: ReviewManifest,
+  subjectType: ReviewSubjectType,
+  subjectId: string,
+): boolean {
+  if (subjectType === "document") return manifest.document.id === subjectId;
+  if (subjectType === "claim") return manifest.claims.some((claim) => claim.id === subjectId);
+  if (subjectType === "evidence-relation") {
+    return manifest.evidenceRelations.some((relation) => relation.id === subjectId);
+  }
+  return manifest.argumentEdges.some((edge) => edge.id === subjectId);
+}
+
+function currentAction(
+  manifest: ReviewManifest,
+  subjectType: ReviewSubjectType,
+  subjectId: string,
+): ReviewAction | undefined {
+  return manifest.reviewActions.findLast(
+    (action) => action.subjectType === subjectType && action.subjectId === subjectId,
+  );
+}
+
+function unresolvedSubjects(manifest: ReviewManifest): string[] {
+  const subjects: ReadonlyArray<readonly [ReviewSubjectType, string]> = [
+    ...manifest.claims.map((claim) => ["claim" as const, claim.id] as const),
+    ...manifest.evidenceRelations.map(
+      (relation) => ["evidence-relation" as const, relation.id] as const,
+    ),
+    ...manifest.argumentEdges.map((edge) => ["argument-edge" as const, edge.id] as const),
+  ];
+
+  return subjects.flatMap(([subjectType, subjectId]) => {
+    const action = currentAction(manifest, subjectType, subjectId);
+    return action !== undefined && (action.decision === "approve" || action.decision === "waive")
+      ? []
+      : [subjectId];
+  });
+}
+
+export function certificationStatus(manifest: ReviewManifest): CertificationStatus {
+  if (manifest.certification === null) return { valid: false, reason: "not-certified" };
+
+  const expectedSourceDigests = sourceDigests(manifest);
+  const bindingsAreCurrent = manifest.reviewActions.every(
+    (action) =>
+      action.boundDocumentSha256 === manifest.document.sha256 &&
+      sameStrings(action.boundSourceSha256s, expectedSourceDigests),
+  );
+  if (!bindingsAreCurrent) return { valid: false, reason: "artifact-changed" };
+
+  const action = manifest.reviewActions.find(
+    (candidate) => candidate.id === manifest.certification?.reviewActionId,
+  );
+  if (
+    action === undefined ||
+    action.subjectType !== "document" ||
+    action.subjectId !== manifest.document.id ||
+    action.decision !== "approve"
+  ) {
+    return { valid: false, reason: "certification-action-missing" };
+  }
+
+  return reviewStateDigest(manifest) === manifest.certification.reviewStateSha256
+    ? { valid: true }
+    : { valid: false, reason: "review-state-changed" };
+}
+
+export class ReviewLedger {
+  readonly #now: () => Date;
+  readonly #createId: () => string;
+
+  constructor(options: ReviewLedgerOptions = {}) {
+    this.#now = options.now ?? (() => new Date());
+    this.#createId = options.createId ?? randomUUID;
+  }
+
+  record(manifest: ReviewManifest, input: RecordActionInput): ReviewManifest {
+    if (!subjectExists(manifest, input.subjectType, input.subjectId)) {
+      throw new Error(`Unknown ${input.subjectType} subject ${input.subjectId}`);
+    }
+    if (input.decision === "waive" && !input.reason?.trim()) {
+      throw new Error("A waiver requires a reason");
+    }
+    if (!input.reviewer.displayName.trim()) throw new Error("Reviewer display name is required");
+
+    const action: ReviewAction = {
+      id: `action-${this.#createId()}`,
+      subjectType: input.subjectType,
+      subjectId: input.subjectId,
+      decision: input.decision,
+      reason: input.reason,
+      reviewer: { ...input.reviewer },
+      at: this.#now().toISOString(),
+      boundDocumentSha256: manifest.document.sha256,
+      boundSourceSha256s: sourceDigests(manifest),
+    };
+
+    return {
+      ...manifest,
+      reviewActions: [...manifest.reviewActions, action],
+      certification: null,
+    };
+  }
+
+  certify(manifest: ReviewManifest, reviewer: Reviewer): ReviewManifest {
+    const unresolved = unresolvedSubjects(manifest);
+    if (unresolved.length > 0) {
+      throw new Error(`Cannot certify; unresolved subjects: ${unresolved.join(", ")}`);
+    }
+
+    const withAction = this.record(manifest, {
+      subjectType: "document",
+      subjectId: manifest.document.id,
+      decision: "approve",
+      reason: "All required review subjects are approved or explicitly waived.",
+      reviewer,
+    });
+    const reviewActionId = withAction.reviewActions.at(-1)?.id;
+    if (reviewActionId === undefined) throw new Error("Certification action was not recorded");
+
+    const certification: Certification = {
+      reviewActionId,
+      reviewStateSha256: reviewStateDigest(withAction),
+      scope:
+        "The reviewer completed the recorded review actions for the exact artifact versions in this manifest.",
+    };
+    return { ...withAction, certification };
+  }
+}

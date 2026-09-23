@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <title>Claim Ledger review</title>
+  <style>
+    :root { color: #20231f; background: #f4f3ed; font-family: ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { padding: 28px max(24px, calc((100vw - 1040px)/2)); border-bottom: 1px solid #cfcec5; background: #fff; }
+    .eyebrow { color: #546a56; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: 6px 0; font-family: ui-serif, Georgia, serif; font-size: clamp(28px, 5vw, 44px); font-weight: 500; }
+    main { max-width: 1040px; margin: 0 auto; padding: 28px 24px 64px; }
+    .notice { padding: 14px 16px; border: 1px solid #d9bd65; border-radius: 8px; background: #fff8dc; }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 12px; margin: 20px 0; }
+    .metric, article { background: #fff; border: 1px solid #d7d6ce; border-radius: 10px; box-shadow: 0 1px 2px #0000000a; }
+    .metric { padding: 16px; }
+    .metric strong { display: block; font-size: 24px; }
+    article { margin: 12px 0; overflow: hidden; }
+    article > div { padding: 18px; }
+    .claim { font: 500 20px/1.45 ui-serif, Georgia, serif; }
+    .evidence { border-top: 1px solid #e5e4dc; background: #fafaf7; }
+    blockquote { margin: 8px 0 0; padding-left: 14px; border-left: 3px solid #8da18f; color: #3f463f; }
+    .pill { display:inline-block; padding: 3px 8px; border-radius: 999px; background: #e8eee8; color:#405443; font-size:12px; font-weight:700; }
+    .human { color: #735318; }
+    .muted { color: #696b65; }
+    .error { color: #8b2e24; }
+  </style>
+</head>
+<body>
+  <header><div class="eyebrow">Evidence review</div><h1>Claim Ledger</h1><div class="muted" id="review-id">Loading review…</div></header>
+  <main>
+    <div class="notice"><strong>Synthetic review fixture</strong> — this published demo contains no sensitive or production data.</div>
+    <div class="summary" id="summary"></div>
+    <section id="claims" aria-live="polite"></section>
+  </main>
+  <script type="module">
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    try {
+      const response = await fetch('./manifest.json');
+      if (!response.ok) throw new Error('The review manifest could not be loaded.');
+      const data = await response.json();
+      document.querySelector('#review-id').textContent = data.reviewId;
+      const current = new Map();
+      for (const action of data.reviewActions) current.set(action.subjectType + ':' + action.subjectId, action);
+      const approved = [...current.values()].filter(action => action.decision === 'approve').length;
+      document.querySelector('#summary').innerHTML = [
+        ['Claims', data.claims.length], ['Evidence checks', data.evidenceRelations.length],
+        ['Human approvals', approved], ['Certified', data.certification ? 'Yes' : 'No']
+      ].map(([label,value]) => '<div class="metric"><span class="muted">'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join('');
+      document.querySelector('#claims').innerHTML = data.claims.map(claim => {
+        const evidence = data.evidenceRelations.filter(item => item.claimId === claim.id);
+        const action = current.get('claim:' + claim.id);
+        return '<article><div><span class="pill">'+escapeHtml(claim.kind)+'</span><p class="claim">'+escapeHtml(claim.text)+'</p><div class="human">Human decision: '+escapeHtml(action?.decision ?? 'pending')+'</div></div>' +
+          evidence.map(item => '<div class="evidence"><span class="pill">Automated: '+escapeHtml(item.assessment.relation)+'</span><blockquote>'+escapeHtml(item.evidence.text)+'</blockquote><p class="muted">Confidence '+escapeHtml(item.assessment.confidence ?? 'n/a')+' · exact quote '+(item.assessment.exactMatch ? 'verified' : 'missing')+'</p></div>').join('') + '</article>';
+      }).join('');
+    } catch (error) {
+      document.querySelector('#claims').innerHTML = '<p class="error">'+escapeHtml(error instanceof Error ? error.message : error)+'</p>';
+    }
+  </script>
+</body>
+</html>

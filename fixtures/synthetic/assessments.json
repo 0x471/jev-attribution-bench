@@ -1,0 +1,24 @@
+{
+  "relation-notice": {
+    "relation": "supports",
+    "probabilities": {
+      "supports": 0.97,
+      "contradicts": 0.01,
+      "says_nothing": 0.02
+    },
+    "confidence": 0.95,
+    "inputTokens": 52,
+    "outputTokens": 3
+  },
+  "relation-costs": {
+    "relation": "supports",
+    "probabilities": {
+      "supports": 0.94,
+      "contradicts": 0.01,
+      "says_nothing": 0.05
+    },
+    "confidence": 0.91,
+    "inputTokens": 61,
+    "outputTokens": 3
+  }
+}

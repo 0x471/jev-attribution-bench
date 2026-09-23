@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "0.1.0",
+  "reviewId": "review-clinical-demo-001",
+  "createdAt": "2026-09-23T09:05:00.000Z",
+  "publication": {
+    "fixture": true,
+    "containsSensitiveData": false
+  },
+  "document": {
+    "id": "clinical-note-v1",
+    "role": "document",
+    "name": "draft.md",
+    "mediaType": "text/markdown",
+    "byteLength": 210,
+    "sha256": "bc5801879a360278662b42748efe6b7c85a63c52ab38cdc3671eb56926f422b3"
+  },
+  "sources": [
+    {
+      "id": "monitoring-protocol-v1",
+      "role": "source",
+      "name": "source.md",
+      "mediaType": "text/markdown",
+      "byteLength": 211,
+      "sha256": "bb8f22e51168b384364dcb754ab3b7adb2b87f498bc2f87d2efc417ec486b3f3"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-potassium",
+      "text": "After increasing the dose, check serum potassium within seven days.",
+      "origin": {
+        "artifactId": "clinical-note-v1",
+        "start": 39,
+        "end": 106,
+        "textSha256": "0626d7a250b9d952b99cc95cd91c6b920c67b101cd9afd573a54b065be7c6fdb",
+        "offsetEncoding": "unicode-code-point"
+      },
+      "kind": "stated",
+      "proposedBy": "human",
+      "proposalModel": null
+    },
+    {
+      "id": "claim-urgent-review",
+      "text": "Urgent clinical review is required if the patient develops severe weakness or an irregular heartbeat.",
+      "origin": {
+        "artifactId": "clinical-note-v1",
+        "start": 108,
+        "end": 209,
+        "textSha256": "303afd84de65cbf9bcfcee59989068431b5d88a079d2431b9ac45c9cb54b73b8",
+        "offsetEncoding": "unicode-code-point"
+      },
+      "kind": "stated",
+      "proposedBy": "human",
+      "proposalModel": null
+    }
+  ],
+  "evidenceRelations": [
+    {
+      "id": "relation-potassium",
+      "claimId": "claim-potassium",
+      "evidence": {
+        "sourceArtifactId": "monitoring-protocol-v1",
+        "proposedQuote": "Measure serum potassium no later than seven days after any dose increase.",
+        "text": "Measure serum potassium no later than seven days after any dose increase.",
+        "anchor": {
+          "artifactId": "monitoring-protocol-v1",
+          "start": 50,
+          "end": 123,
+          "textSha256": "37c072312959bf194380a45ccbd30e22ed8c725fa6fa7de6a1e1497ff0c88b74",
+          "offsetEncoding": "unicode-code-point"
+        }
+      },
+      "assessment": {
+        "relation": "supports",
+        "probabilities": {
+          "supports": 0.96,
+          "contradicts": 0.01,
+          "says_nothing": 0.03
+        },
+        "confidence": 0.93,
+        "inputTokens": 48,
+        "outputTokens": 3,
+        "requestedModel": "fixture-v1",
+        "resolvedModel": "fixture-v1",
+        "rubricVersion": "evidence-relation-v1",
+        "runAt": "2026-09-23T09:05:00.000Z",
+        "exactMatch": true,
+        "inputSha256": "f467f1f910dd5d80bdf091e751f460003b1b8dc6945066d6da83af3a64623a82"
+      }
+    },
+    {
+      "id": "relation-urgent-review",
+      "claimId": "claim-urgent-review",
+      "evidence": {
+        "sourceArtifactId": "monitoring-protocol-v1",
+        "proposedQuote": "Arrange urgent clinical review when severe weakness or an irregular heartbeat occurs.",
+        "text": "Arrange urgent clinical review when severe weakness or an irregular heartbeat occurs.",
+        "anchor": {
+          "artifactId": "monitoring-protocol-v1",
+          "start": 125,
+          "end": 210,
+          "textSha256": "86a5a71cb2263993f02cffdc2adeb40461d57f2ab341f8bb7fba27364218a494",
+          "offsetEncoding": "unicode-code-point"
+        }
+      },
+      "assessment": {
+        "relation": "supports",
+        "probabilities": {
+          "supports": 0.98,
+          "contradicts": 0.01,
+          "says_nothing": 0.01
+        },
+        "confidence": 0.97,
+        "inputTokens": 51,
+        "outputTokens": 3,
+        "requestedModel": "fixture-v1",
+        "resolvedModel": "fixture-v1",
+        "rubricVersion": "evidence-relation-v1",
+        "runAt": "2026-09-23T09:05:00.000Z",
+        "exactMatch": true,
+        "inputSha256": "9bf5a58f3eb3f21fa7963c524bc38d4364ca48b5907bf0adbb69b18a61d8e67d"
+      }
+    }
+  ],
+  "argumentEdges": [],
+  "reviewActions": [],
+  "certification": null,
+  "toolchain": {
+    "claimLedgerVersion": "0.0.0",
+    "nodeVersion": "v26.5.0",
+    "sdkVersion": null
+  }
+}

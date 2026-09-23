@@ -8,18 +8,29 @@
     "schemaVersion",
     "reviewId",
     "createdAt",
+    "publication",
     "document",
     "sources",
     "claims",
     "evidenceRelations",
     "argumentEdges",
     "reviewActions",
+    "certification",
     "toolchain"
   ],
   "properties": {
     "schemaVersion": { "const": "0.1.0" },
     "reviewId": { "$ref": "#/$defs/id" },
     "createdAt": { "type": "string", "format": "date-time" },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fixture", "containsSensitiveData"],
+      "properties": {
+        "fixture": { "type": "boolean" },
+        "containsSensitiveData": { "type": "boolean" }
+      }
+    },
     "document": { "$ref": "#/$defs/artifact" },
     "sources": {
       "type": "array",
@@ -71,14 +82,15 @@
     "anchor": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactId", "start", "end", "textSha256"],
+      "required": ["artifactId", "start", "end", "textSha256", "offsetEncoding"],
       "properties": {
         "artifactId": { "$ref": "#/$defs/id" },
         "start": { "type": "integer", "minimum": 0 },
         "end": { "type": "integer", "minimum": 1 },
         "page": { "type": ["integer", "null"], "minimum": 1 },
         "paragraph": { "type": ["integer", "null"], "minimum": 1 },
-        "textSha256": { "$ref": "#/$defs/sha256" }
+        "textSha256": { "$ref": "#/$defs/sha256" },
+        "offsetEncoding": { "const": "unicode-code-point" }
       }
     },
     "artifact": {
@@ -120,10 +132,17 @@
     "evidenceSpan": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["text", "anchor"],
+      "required": ["sourceArtifactId", "proposedQuote", "text", "anchor"],
       "properties": {
+        "sourceArtifactId": { "$ref": "#/$defs/id" },
+        "proposedQuote": { "type": "string", "minLength": 1 },
         "text": { "type": "string", "minLength": 1 },
-        "anchor": { "$ref": "#/$defs/anchor" }
+        "anchor": {
+          "oneOf": [
+            { "$ref": "#/$defs/anchor" },
+            { "type": "null" }
+          ]
+        }
       }
     },
     "automatedAssessment": {
@@ -136,6 +155,8 @@
         "resolvedModel",
         "rubricVersion",
         "inputSha256",
+        "inputTokens",
+        "outputTokens",
         "runAt"
       ],
       "properties": {
@@ -157,6 +178,7 @@
         },
         "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
         "inputTokens": { "type": ["integer", "null"], "minimum": 0 },
+        "outputTokens": { "type": ["integer", "null"], "minimum": 0 },
         "runAt": { "type": "string", "format": "date-time" }
       }
     },
@@ -224,10 +246,10 @@
     "certification": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["reviewActionId", "manifestSha256", "scope"],
+      "required": ["reviewActionId", "reviewStateSha256", "scope"],
       "properties": {
         "reviewActionId": { "$ref": "#/$defs/id" },
-        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "reviewStateSha256": { "$ref": "#/$defs/sha256" },
         "scope": {
           "const": "The reviewer completed the recorded review actions for the exact artifact versions in this manifest."
         }

@@ -3,13 +3,18 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "claim-ledger": "./src/cli.ts"
+  },
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "check": "npm run typecheck && npm run validate:fixtures",
+    "check": "npm run typecheck && npm test && npm run validate:fixtures",
+    "claim-ledger": "tsx --env-file-if-exists=.env src/cli.ts",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "validate:fixtures": "tsx scripts/validate-schema.ts fixtures/synthetic/manifest.json"
+    "validate:fixtures": "tsx scripts/validate-schema.ts schemas/project.schema.json fixtures/synthetic/project.json fixtures/synthetic/clinical/project.json && tsx scripts/validate-schema.ts schemas/review-manifest.schema.json fixtures/synthetic/manifest.json fixtures/synthetic/clinical/manifest.json review/manifest.json"
   },
   "dependencies": {
     "@typesafe-ai/sdk": "0.6.0",
@@ -19,6 +24,7 @@
   "devDependencies": {
     "@types/node": "22.18.0",
     "tsx": "4.23.15",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
   }
 }
