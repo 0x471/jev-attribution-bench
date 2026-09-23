@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { sha256 } from "./artifacts.js";
 import {
   canonicalJson,
+  type ArtifactBinding,
   type Certification,
   type ReviewAction,
   type ReviewDecision,
@@ -32,15 +33,26 @@ export type CertificationStatus =
         | "not-certified"
         | "artifact-changed"
         | "review-state-changed"
-        | "certification-action-missing";
+        | "certification-action-missing"
+        | "unresolved-subjects";
     };
 
-function sourceDigests(manifest: ReviewManifest): string[] {
-  return manifest.sources.map((source) => source.sha256).sort();
+function sourceBindings(manifest: ReviewManifest): ArtifactBinding[] {
+  return manifest.sources
+    .map((source) => ({ artifactId: source.id, sha256: source.sha256 }))
+    .sort((left, right) => left.artifactId.localeCompare(right.artifactId));
 }
 
-function sameStrings(left: string[], right: string[]): boolean {
-  return JSON.stringify([...left].sort()) === JSON.stringify([...right].sort());
+function sameBindings(left: ArtifactBinding[], right: ArtifactBinding[]): boolean {
+  return canonicalJson(left) === canonicalJson(right);
+}
+
+function latestActions(manifest: ReviewManifest): ReviewAction[] {
+  const latest = new Map<string, ReviewAction>();
+  for (const action of manifest.reviewActions) {
+    latest.set(`${action.subjectType}:${action.subjectId}`, action);
+  }
+  return [...latest.values()];
 }
 
 function reviewState(manifest: ReviewManifest): Omit<ReviewManifest, "certification"> {
@@ -95,11 +107,11 @@ function unresolvedSubjects(manifest: ReviewManifest): string[] {
 export function certificationStatus(manifest: ReviewManifest): CertificationStatus {
   if (manifest.certification === null) return { valid: false, reason: "not-certified" };
 
-  const expectedSourceDigests = sourceDigests(manifest);
-  const bindingsAreCurrent = manifest.reviewActions.every(
+  const expectedSourceBindings = sourceBindings(manifest);
+  const bindingsAreCurrent = latestActions(manifest).every(
     (action) =>
       action.boundDocumentSha256 === manifest.document.sha256 &&
-      sameStrings(action.boundSourceSha256s, expectedSourceDigests),
+      sameBindings(action.boundSources, expectedSourceBindings),
   );
   if (!bindingsAreCurrent) return { valid: false, reason: "artifact-changed" };
 
@@ -113,6 +125,10 @@ export function certificationStatus(manifest: ReviewManifest): CertificationStat
     action.decision !== "approve"
   ) {
     return { valid: false, reason: "certification-action-missing" };
+  }
+
+  if (unresolvedSubjects(manifest).length > 0) {
+    return { valid: false, reason: "unresolved-subjects" };
   }
 
   return reviewStateDigest(manifest) === manifest.certification.reviewStateSha256
@@ -147,7 +163,7 @@ export class ReviewLedger {
       reviewer: { ...input.reviewer },
       at: this.#now().toISOString(),
       boundDocumentSha256: manifest.document.sha256,
-      boundSourceSha256s: sourceDigests(manifest),
+      boundSources: sourceBindings(manifest),
     };
 
     return {

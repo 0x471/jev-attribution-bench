@@ -1,18 +1,21 @@
-import { readFile, realpath } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
+import { dirname } from "node:path";
 
 import { Ajv2020, type ValidateFunction } from "ajv/dist/2020.js";
 
-import { ingestTextArtifact, sha256, verifyArtifactBytes } from "./artifacts.js";
+import { sha256, verifyArtifactBytes } from "./artifacts.js";
+import { ProjectArtifactStore } from "./artifact-store.js";
+import { importClaims } from "./claim-catalog.js";
 import { EvidenceReviewEngine, locateNormalizedQuote } from "./evidence-review.js";
 import { FixtureEvidenceRelationChecker } from "./fixture-checker.js";
 import {
   CachedEvidenceRelationChecker,
   FileAssessmentCache,
+  PINNED_JEV_MODEL,
   createJevCheckerFromEnvironment,
 } from "./jev-checker.js";
-import type { ArgumentEdge, Claim, ReviewManifest } from "./manifest.js";
+import type { ArgumentEdge, ReviewManifest } from "./manifest.js";
 
 const require = createRequire(import.meta.url);
 const addFormats = require("ajv-formats") as typeof import("ajv-formats").default;
@@ -51,7 +54,7 @@ interface ProjectInput {
 
 export type CheckerConfiguration =
   | { type: "fixture"; assessmentsPath: string }
-  | { type: "jev"; cacheDirectory: string; model?: string; rubricVersion?: string };
+  | { type: "jev"; cacheDirectory: string; rubricVersion?: string };
 
 export interface BuildReviewProjectOptions {
   projectPath: string;
@@ -75,6 +78,7 @@ async function readProject(projectPath: string): Promise<ProjectInput> {
   }
   const project = value as ProjectInput;
   assertUniqueIds(project);
+  assertProjectReferences(project);
   return project;
 }
 
@@ -85,20 +89,6 @@ async function projectValidator(): Promise<ValidateFunction> {
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   addFormats(ajv);
   return ajv.compile(schema);
-}
-
-async function resolveProjectFile(projectDirectory: string, declaredPath: string): Promise<string> {
-  if (isAbsolute(declaredPath)) {
-    throw new Error(`Project artifact paths must be relative: ${declaredPath}`);
-  }
-  const root = await realpath(projectDirectory);
-  const candidate = resolve(root, declaredPath);
-  const resolvedCandidate = await realpath(candidate);
-  const fromRoot = relative(root, resolvedCandidate);
-  if (fromRoot.startsWith("..") || isAbsolute(fromRoot)) {
-    throw new Error(`Project artifact path escapes the project directory: ${declaredPath}`);
-  }
-  return resolvedCandidate;
 }
 
 function assertUniqueIds(project: ProjectInput): void {
@@ -118,52 +108,41 @@ function assertUniqueIds(project: ProjectInput): void {
   }
 }
 
+function assertProjectReferences(project: ProjectInput): void {
+  const sourceIds = new Set(project.sources.map((source) => source.id));
+  const claimIds = new Set(project.claims.map((claim) => claim.id));
+  for (const claim of project.claims) {
+    for (const evidence of claim.evidence) {
+      if (!sourceIds.has(evidence.sourceId)) {
+        throw new Error(`Evidence ${evidence.id} references unknown source ${evidence.sourceId}`);
+      }
+    }
+  }
+  for (const edge of project.argumentEdges) {
+    if (!claimIds.has(edge.fromClaimId)) {
+      throw new Error(`Argument edge ${edge.id} references unknown claim ${edge.fromClaimId}`);
+    }
+    if (!claimIds.has(edge.toClaimId)) {
+      throw new Error(`Argument edge ${edge.id} references unknown claim ${edge.toClaimId}`);
+    }
+  }
+}
+
 export async function buildReviewProject(
   options: BuildReviewProjectOptions,
 ): Promise<ReviewManifest> {
   const now = options.now ?? (() => new Date());
   const project = await readProject(options.projectPath);
   const projectDirectory = dirname(options.projectPath);
+  const artifactStore = await ProjectArtifactStore.open(projectDirectory);
 
-  const documentPath = await resolveProjectFile(projectDirectory, project.document.path);
-  const document = ingestTextArtifact({
-    ...project.document,
-    role: "document",
-    name: basename(project.document.path),
-    bytes: await readFile(documentPath),
-  });
+  const document = await artifactStore.ingest(project.document, "document");
   const sourceRecords = await Promise.all(
-    project.sources.map(async (source) =>
-      ingestTextArtifact({
-        ...source,
-        role: "source",
-        name: basename(source.path),
-        bytes: await readFile(await resolveProjectFile(projectDirectory, source.path)),
-      }),
-    ),
+    project.sources.map(async (source) => artifactStore.ingest(source, "source")),
   );
   const sourceById = new Map(sourceRecords.map((source) => [source.artifact.id, source]));
 
-  const claims: Claim[] = project.claims.map((input) => {
-    const match = locateNormalizedQuote(document.text, input.originText);
-    if (match === null) {
-      throw new Error(`Claim ${input.id} origin text was not found in the document`);
-    }
-    return {
-      id: input.id,
-      text: input.text,
-      origin: {
-        artifactId: document.artifact.id,
-        start: match.start,
-        end: match.end,
-        textSha256: sha256(match.text),
-        offsetEncoding: "unicode-code-point",
-      },
-      kind: input.kind,
-      proposedBy: input.proposedBy,
-      proposalModel: null,
-    };
-  });
+  const claims = importClaims(document, project.claims);
   const claimById = new Map(claims.map((claim) => [claim.id, claim]));
 
   const rubricVersion =
@@ -175,12 +154,12 @@ export async function buildReviewProject(
       ? await FixtureEvidenceRelationChecker.fromFile(options.checker.assessmentsPath, now)
       : new CachedEvidenceRelationChecker(
           createJevCheckerFromEnvironment({
-            model: options.checker.model ?? "jev-1.13.0",
+            model: PINNED_JEV_MODEL,
             rubricVersion,
             now,
           }),
           new FileAssessmentCache(options.checker.cacheDirectory),
-          `${options.checker.model ?? "jev-1.13.0"}:${rubricVersion}:sdk-0.6.0`,
+          `${PINNED_JEV_MODEL}:${rubricVersion}:sdk-0.6.0`,
         );
   const engine = new EvidenceReviewEngine(checker, {
     rubricVersion,
@@ -233,12 +212,13 @@ export async function verifyProjectArtifacts(
 ): Promise<ProjectArtifactVerification> {
   const project = await readProject(projectPath);
   const projectDirectory = dirname(projectPath);
+  const artifactStore = await ProjectArtifactStore.open(projectDirectory);
   const declarations = [project.document, ...project.sources];
   const expectedById = new Map(
     [manifest.document, ...manifest.sources].map((artifact) => [artifact.id, artifact]),
   );
   const errors: string[] = [];
-  const records = new Map<string, ReturnType<typeof ingestTextArtifact>>();
+  const records = new Map<string, Awaited<ReturnType<ProjectArtifactStore["ingest"]>>>();
 
   for (const declaration of declarations) {
     const expected = expectedById.get(declaration.id);
@@ -246,15 +226,12 @@ export async function verifyProjectArtifacts(
       errors.push(`${declaration.id}: artifact is absent from the manifest`);
       continue;
     }
-    const bytes = await readFile(await resolveProjectFile(projectDirectory, declaration.path));
-    const record = ingestTextArtifact({
-      ...declaration,
-      role: declaration.id === project.document.id ? "document" : "source",
-      name: basename(declaration.path),
-      bytes,
-    });
+    const record = await artifactStore.ingest(
+      declaration,
+      declaration.id === project.document.id ? "document" : "source",
+    );
     records.set(declaration.id, record);
-    const result = verifyArtifactBytes(expected, bytes);
+    const result = verifyArtifactBytes(expected, record.bytes);
     if (!result.valid) {
       errors.push(
         `${declaration.id}: sha256 mismatch; expected ${result.expectedSha256}, got ${result.actualSha256}`,

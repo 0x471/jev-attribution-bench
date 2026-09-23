@@ -82,6 +82,9 @@ function safeBuildError(error: unknown): { code: string; message: string } {
   if (message.includes("TYPESAFE_API_KEY")) {
     return { code: "configuration-error", message: "The local Jev API key is not configured." };
   }
+  if (message.startsWith("Live Jev runs are disabled")) {
+    return { code: "policy-blocked", message };
+  }
   if (message.includes("ENOENT")) {
     return { code: "missing-input", message: "A required local input file was not found." };
   }
@@ -114,10 +117,15 @@ export async function runCli(args: string[], io: CliIo = defaultIo): Promise<num
   try {
     if (command === "build") {
       const options = flags(rest);
-      allowOnly(options, ["--project", "--checker", "--assessments", "--out", "--cache", "--model", "--timestamp"]);
+      allowOnly(options, ["--project", "--checker", "--assessments", "--out", "--cache", "--timestamp"]);
       const output = required(options, "--out");
       try {
         const checker = required(options, "--checker");
+        if (checker === "jev") {
+          throw new Error(
+            "Live Jev runs are disabled until data-handling, outbound-preview, and budget controls are approved.",
+          );
+        }
         const projectPath = required(options, "--project");
         const now = clockFromOption(options);
         const manifest = await buildReviewProject({
@@ -130,7 +138,6 @@ export async function runCli(args: string[], io: CliIo = defaultIo): Promise<num
                 ? {
                     type: "jev",
                     cacheDirectory: options.get("--cache") ?? ".cache/assessments",
-                    ...(options.get("--model") ? { model: options.get("--model")! } : {}),
                   }
                 : (() => {
                     throw new Error(`Unknown checker ${checker}`);
@@ -201,10 +208,11 @@ export async function runCli(args: string[], io: CliIo = defaultIo): Promise<num
 
     if (command === "export-site") {
       const options = flags(rest);
-      allowOnly(options, ["--manifest", "--out"]);
+      allowOnly(options, ["--manifest", "--project", "--out"]);
       await exportStaticSite(
         await loadManifest(required(options, "--manifest")),
         required(options, "--out"),
+        required(options, "--project"),
       );
       io.stdout(`Exported static synthetic-fixture viewer to ${required(options, "--out")}`);
       return 0;

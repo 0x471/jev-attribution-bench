@@ -35,25 +35,26 @@ The static viewer is a read-only projection over an exported Review Manifest.
 
 ## Deep modules and interfaces
 
-### `ArtifactStore`
+### `ProjectArtifactStore`
 
 ```ts
-ingest(bytes: Uint8Array, mediaType: string): Promise<Artifact>
-readText(artifactId: ArtifactId): Promise<AnchoredText>
+open(projectDirectory: string): Promise<ProjectArtifactStore>
+ingest(declaration: TextArtifactDeclaration, role: ArtifactRole): Promise<ArtifactRecord>
 ```
 
-The module hides byte preservation, SHA-256, extraction provenance, anchor construction, and
-content-addressed identity. Callers do not manipulate filesystem paths or compute digests.
+The module hides project-root containment (including symlink resolution), byte preservation,
+strict UTF-8 decoding, SHA-256, and content-addressed identity. Callers do not manipulate artifact
+filesystem paths or compute artifact digests.
 
 ### `ClaimCatalog`
 
 ```ts
-import(document: DocumentVersion, proposals: ClaimProposal[]): Claim[]
+importClaims(document: ArtifactRecord, proposals: ClaimProposalInput[]): Claim[]
 ```
 
-The module validates atomic Claims against document Anchors and rejects proposals that do not
-map back to the exact Document Version. Manual and future generative proposal adapters sit
-outside this interface.
+The module validates Claims against document Anchors and rejects proposals that do not map back to
+the exact Document Version. Manual and future generative proposal adapters sit outside this
+interface.
 
 ### `EvidenceReviewEngine`
 
@@ -93,8 +94,10 @@ export(state: ReviewState): ReviewManifest
 verify(manifest: unknown): VerificationResult
 ```
 
-The module provides a canonical, schema-valid representation and verifies internal references,
-digests, and Certification bindings. JSON serialization details remain internal.
+The module provides a canonical, schema-valid representation and verifies internal references and
+Certification bindings. `verifyProjectArtifacts` separately replays artifact digests and Anchors
+from the declared project files; static publication requires both checks. JSON serialization
+details remain internal.
 
 ## Internal state transitions
 

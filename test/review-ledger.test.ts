@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ReviewManifest } from "../src/manifest.js";
-import { ReviewLedger, certificationStatus } from "../src/review-ledger.js";
+import { ReviewLedger, certificationStatus, reviewStateDigest } from "../src/review-ledger.js";
 
 function baseManifest(): ReviewManifest {
   return {
@@ -145,6 +145,51 @@ describe("ReviewLedger seam", () => {
     expect(certificationStatus(changed)).toMatchObject({ valid: false, reason: "artifact-changed" });
   });
 
+  it("preserves stale history but permits fresh review actions for changed artifacts", () => {
+    const ledger = new ReviewLedger({ now: () => new Date("2026-09-23T11:00:00.000Z") });
+    let manifest = baseManifest();
+    for (const [subjectType, subjectId] of [
+      ["claim", "claim-1"],
+      ["evidence-relation", "relation-1"],
+    ] as const) {
+      manifest = ledger.record(manifest, { subjectType, subjectId, decision: "approve", reason: null, reviewer });
+    }
+    manifest = ledger.certify(manifest, reviewer);
+    manifest.sources[0]!.sha256 = "8".repeat(64);
+    expect(certificationStatus(manifest)).toMatchObject({ valid: false, reason: "artifact-changed" });
+
+    for (const [subjectType, subjectId] of [
+      ["claim", "claim-1"],
+      ["evidence-relation", "relation-1"],
+    ] as const) {
+      manifest = ledger.record(manifest, { subjectType, subjectId, decision: "approve", reason: null, reviewer });
+    }
+    manifest = ledger.certify(manifest, reviewer);
+    expect(certificationStatus(manifest)).toEqual({ valid: true });
+    expect(manifest.reviewActions.length).toBe(6);
+  });
+
+  it("binds source identity as well as the digest multiset", () => {
+    const ledger = new ReviewLedger({ now: () => new Date("2026-09-23T11:00:00.000Z") });
+    let manifest = baseManifest();
+    manifest.sources.push({
+      id: "source-v2", role: "source", name: "second.md", mediaType: "text/markdown",
+      byteLength: 20, sha256: "6".repeat(64),
+    });
+    for (const [subjectType, subjectId] of [
+      ["claim", "claim-1"],
+      ["evidence-relation", "relation-1"],
+    ] as const) {
+      manifest = ledger.record(manifest, { subjectType, subjectId, decision: "approve", reason: null, reviewer });
+    }
+    manifest = ledger.certify(manifest, reviewer);
+    const first = manifest.sources[0]!.sha256;
+    manifest.sources[0]!.sha256 = manifest.sources[1]!.sha256;
+    manifest.sources[1]!.sha256 = first;
+
+    expect(certificationStatus(manifest)).toMatchObject({ valid: false, reason: "artifact-changed" });
+  });
+
   it("requires a reason for a human waiver", () => {
     const ledger = new ReviewLedger();
     expect(() =>
@@ -156,5 +201,32 @@ describe("ReviewLedger seam", () => {
         reviewer,
       }),
     ).toThrow(/reason/i);
+  });
+
+  it("rejects a forged certification when reviewable subjects are unresolved", () => {
+    const ledger = new ReviewLedger({ now: () => new Date("2026-09-23T11:00:00.000Z") });
+    let manifest = baseManifest();
+    for (const [subjectType, subjectId] of [
+      ["claim", "claim-1"],
+      ["evidence-relation", "relation-1"],
+    ] as const) {
+      manifest = ledger.record(manifest, {
+        subjectType,
+        subjectId,
+        decision: "approve",
+        reason: null,
+        reviewer,
+      });
+    }
+    manifest = ledger.certify(manifest, reviewer);
+    manifest.reviewActions = manifest.reviewActions.filter(
+      (action) => action.subjectType === "document",
+    );
+    manifest.certification!.reviewStateSha256 = reviewStateDigest(manifest);
+
+    expect(certificationStatus(manifest)).toEqual({
+      valid: false,
+      reason: "unresolved-subjects",
+    });
   });
 });

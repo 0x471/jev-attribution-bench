@@ -82,22 +82,12 @@ npm run claim-ledger -- certify \
 
 Reviewer identity is explicitly `self-asserted` in v0; this is not a digital signature.
 
-## Run the pinned Jev adapter
+## Pinned Jev adapter
 
-Copy `.env.example` to `.env` and add a TypeSafe key locally. `.env` is ignored by Git. Review the
-provider's data-handling terms before sending any non-synthetic text.
-
-```sh
-npm run claim-ledger -- build \
-  --project fixtures/synthetic/project.json \
-  --checker jev \
-  --model jev-1.13.0 \
-  --cache .cache/assessments \
-  --out work/live-manifest.json
-```
-
-The key is read only by the local process. The browser viewer has no provider adapter and no
-credential path. No live Jev result is committed in this repository.
+The `jev-1.13.0` adapter is implemented and contract-tested, but the CLI deliberately refuses live
+runs until data-handling terms, an outbound-data preview, and enforceable budget controls are
+approved. `.env` is ignored by Git for that later opt-in path. The browser viewer has no provider
+adapter or credential path, and no live Jev result is committed in this repository.
 
 ## Preview the static fixture viewer
 
@@ -106,6 +96,7 @@ The checked-in [`review/`](./review/) bundle contains only the synthetic legal f
 ```sh
 npm run claim-ledger -- export-site \
   --manifest fixtures/synthetic/manifest.json \
+  --project fixtures/synthetic/project.json \
   --out review
 
 python3 -m http.server 8765 --directory review

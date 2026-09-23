@@ -50,7 +50,8 @@ Run `npm run check` from a clean checkout to reproduce this evidence.
 ## Deliberate non-results
 
 This commit contains no live Jev benchmark result. The adapter is implemented and contract-tested,
-but a live run would send text to TypeSafe and requires an approved account/data-handling decision.
+but the CLI refuses a live run because sending text to TypeSafe requires approved account terms,
+an outbound-data preview, and enforceable budget controls.
 The SDK reports input and output tokens but not price, so the manifest records token usage and does
 not invent an estimated dollar cost.
 

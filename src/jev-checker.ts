@@ -11,6 +11,7 @@ import type {
 } from "./evidence-review.js";
 
 const RELATIONS = ["supports", "contradicts", "says_nothing"] as const;
+export const PINNED_JEV_MODEL = "jev-1.13.0";
 type Relation = (typeof RELATIONS)[number];
 
 interface ChoiceAnswer {
@@ -75,8 +76,8 @@ export class JevEvidenceRelationChecker implements EvidenceRelationChecker {
   };
 
   constructor(client: SystemOneClient, options: JevCheckerOptions) {
-    if (!options.model.match(/^jev-\d+\.\d+\.\d+$/u)) {
-      throw new Error(`Jev model must be a versioned ID, received ${options.model}`);
+    if (options.model !== PINNED_JEV_MODEL) {
+      throw new Error(`Jev model must be pinned to ${PINNED_JEV_MODEL}; received ${options.model}`);
     }
     if (!Number.isInteger(options.timeoutMs ?? 10_000) || (options.timeoutMs ?? 10_000) < 1) {
       throw new Error("Jev timeoutMs must be a positive integer");

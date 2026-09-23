@@ -125,6 +125,15 @@ export class ManifestExporter {
           `review action ${action.id} references unknown ${action.subjectType} ${action.subjectId}`,
         );
       }
+      if (action.decision === "waive" && !action.reason?.trim()) {
+        errors.push(`review action ${action.id} waives a subject without a reason`);
+      }
+      const boundSourceIds = action.boundSources
+        .map((binding) => binding.artifactId)
+        .sort();
+      if (JSON.stringify(boundSourceIds) !== JSON.stringify([...sourceIds].sort())) {
+        errors.push(`review action ${action.id} does not bind every declared source identity`);
+      }
     }
     if (manifest.certification !== null) {
       const status = certificationStatus(manifest);

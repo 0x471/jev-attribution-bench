@@ -216,7 +216,7 @@
         "reviewer",
         "at",
         "boundDocumentSha256",
-        "boundSourceSha256s"
+        "boundSources"
       ],
       "properties": {
         "id": { "$ref": "#/$defs/id" },
@@ -230,15 +230,22 @@
           "required": ["displayName", "identityAssurance"],
           "properties": {
             "displayName": { "type": "string", "minLength": 1 },
-            "identityAssurance": { "enum": ["self-asserted", "authenticated", "signed"] },
-            "providerSubject": { "type": ["string", "null"] }
+            "identityAssurance": { "const": "self-asserted" }
           }
         },
         "at": { "type": "string", "format": "date-time" },
         "boundDocumentSha256": { "$ref": "#/$defs/sha256" },
-        "boundSourceSha256s": {
+        "boundSources": {
           "type": "array",
-          "items": { "$ref": "#/$defs/sha256" },
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["artifactId", "sha256"],
+            "properties": {
+              "artifactId": { "$ref": "#/$defs/id" },
+              "sha256": { "$ref": "#/$defs/sha256" }
+            }
+          },
           "uniqueItems": true
         }
       }

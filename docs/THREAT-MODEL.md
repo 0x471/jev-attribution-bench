@@ -54,8 +54,9 @@ closed; no approval carry-forward in v0.
 
 Threat: extracted text offsets no longer refer to the quoted bytes after parsing or normalization.
 
-Controls: preserve raw bytes; store parser provenance; store raw and normalized span digests;
-verify exact text during export; flag lossy extraction.
+Controls: preserve raw bytes; store raw span digests; replay artifact and Anchor checks from the
+declared project files before static export. Parser provenance and lossy-extraction warnings become
+required when document extraction is introduced after v0.
 
 ### Reviewer impersonation or ledger tampering
 

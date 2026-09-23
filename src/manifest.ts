@@ -33,8 +33,12 @@ export type ReviewDecision = "approve" | "reject" | "waive";
 
 export interface Reviewer {
   displayName: string;
-  identityAssurance: "self-asserted" | "authenticated" | "signed";
-  providerSubject?: string | null;
+  identityAssurance: "self-asserted";
+}
+
+export interface ArtifactBinding {
+  artifactId: string;
+  sha256: string;
 }
 
 export interface ReviewAction {
@@ -46,7 +50,7 @@ export interface ReviewAction {
   reviewer: Reviewer;
   at: string;
   boundDocumentSha256: string;
-  boundSourceSha256s: string[];
+  boundSources: ArtifactBinding[];
 }
 
 export interface Certification {
@@ -90,4 +94,3 @@ function canonicalize(value: unknown): unknown {
 export function canonicalJson(value: unknown): string {
   return JSON.stringify(canonicalize(value));
 }
-

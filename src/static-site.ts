@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import { ManifestExporter } from "./manifest-exporter.js";
 import type { ReviewManifest } from "./manifest.js";
+import { verifyProjectArtifacts } from "./project-builder.js";
 
 const INDEX_HTML = `<!doctype html>
 <html lang="en">
@@ -39,9 +40,10 @@ const INDEX_HTML = `<!doctype html>
 <body>
   <header><div class="eyebrow">Evidence review</div><h1>Claim Ledger</h1><div class="muted" id="review-id">Loading review…</div></header>
   <main>
-    <div class="notice"><strong>Synthetic review fixture</strong> — this published demo contains no sensitive or production data.</div>
+    <div class="notice"><strong>Synthetic review fixture</strong> — this contains no sensitive or production data. Automated assessments are not human approvals.</div>
     <div class="summary" id="summary"></div>
     <section id="claims" aria-live="polite"></section>
+    <section id="edges" aria-live="polite"></section>
   </main>
   <script type="module">
     const escapeHtml = value => String(value).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
@@ -61,8 +63,17 @@ const INDEX_HTML = `<!doctype html>
         const evidence = data.evidenceRelations.filter(item => item.claimId === claim.id);
         const action = current.get('claim:' + claim.id);
         return '<article><div><span class="pill">'+escapeHtml(claim.kind)+'</span><p class="claim">'+escapeHtml(claim.text)+'</p><div class="human">Human decision: '+escapeHtml(action?.decision ?? 'pending')+'</div></div>' +
-          evidence.map(item => '<div class="evidence"><span class="pill">Automated: '+escapeHtml(item.assessment.relation)+'</span><blockquote>'+escapeHtml(item.evidence.text)+'</blockquote><p class="muted">Confidence '+escapeHtml(item.assessment.confidence ?? 'n/a')+' · exact quote '+(item.assessment.exactMatch ? 'verified' : 'missing')+'</p></div>').join('') + '</article>';
+          evidence.map(item => {
+            const evidenceAction = current.get('evidence-relation:' + item.id);
+            return '<div class="evidence"><span class="pill">Automated: '+escapeHtml(item.assessment.relation)+'</span><blockquote>'+escapeHtml(item.evidence.text)+'</blockquote><p class="muted">Confidence '+escapeHtml(item.assessment.confidence ?? 'n/a')+' · exact quote '+(item.assessment.exactMatch ? 'verified' : 'missing')+'</p><div class="human">Human evidence decision: '+escapeHtml(evidenceAction?.decision ?? 'pending')+'</div></div>';
+          }).join('') + '</article>';
       }).join('');
+      document.querySelector('#edges').innerHTML = '<h2>Claim relationships</h2>' + (data.argumentEdges.length === 0
+        ? '<p class="muted">No argument edges recorded.</p>'
+        : data.argumentEdges.map(edge => {
+            const action = current.get('argument-edge:' + edge.id);
+            return '<article><div><strong>'+escapeHtml(edge.fromClaimId)+' '+escapeHtml(edge.relation)+' '+escapeHtml(edge.toClaimId)+'</strong><p class="human">Human decision: '+escapeHtml(action?.decision ?? 'pending')+'</p></div></article>';
+          }).join(''));
     } catch (error) {
       document.querySelector('#claims').innerHTML = '<p class="error">'+escapeHtml(error instanceof Error ? error.message : error)+'</p>';
     }
@@ -74,6 +85,7 @@ const INDEX_HTML = `<!doctype html>
 export async function exportStaticSite(
   manifest: ReviewManifest,
   outputDirectory: string,
+  projectPath: string,
 ): Promise<void> {
   if (!manifest.publication.fixture) {
     throw new Error("Static publication is restricted to synthetic fixtures");
@@ -86,6 +98,12 @@ export async function exportStaticSite(
   const verification = exporter.verify(manifest);
   if (!verification.valid) {
     throw new Error(`Refusing to publish invalid manifest:\n${verification.errors.join("\n")}`);
+  }
+  const artifacts = await verifyProjectArtifacts(projectPath, manifest);
+  if (!artifacts.valid) {
+    throw new Error(
+      `Refusing to publish stale or mis-anchored artifacts:\n${artifacts.errors.join("\n")}`,
+    );
   }
 
   await mkdir(outputDirectory, { recursive: true });

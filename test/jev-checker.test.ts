@@ -22,6 +22,16 @@ const input = {
 };
 
 describe("EvidenceRelationChecker seam", () => {
+  it("rejects a different Jev version even when it is a versioned identifier", () => {
+    expect(
+      () =>
+        new JevEvidenceRelationChecker({ systemOne: async () => { throw new Error("unused"); } }, {
+          model: "jev-1.14.0",
+          rubricVersion: "evidence-relation-v1",
+        }),
+    ).toThrow(/jev-1\.13\.0/u);
+  });
+
   it("asks one pinned three-way Choice and preserves its complete distribution", async () => {
     const systemOne = vi.fn(async () => ({
       model: "jev-1.13.0",

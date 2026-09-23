@@ -13,10 +13,12 @@ async function fixtureManifest(): Promise<ReviewManifest> {
   ) as ReviewManifest;
 }
 
+const fixtureProject = new URL("../fixtures/synthetic/project.json", import.meta.url).pathname;
+
 describe("static review site", () => {
   it("exports a credential-free viewer for a public synthetic fixture", async () => {
     const output = await mkdtemp(join(tmpdir(), "claim-ledger-site-"));
-    await exportStaticSite(await fixtureManifest(), output);
+    await exportStaticSite(await fixtureManifest(), output, fixtureProject);
 
     const html = await readFile(join(output, "index.html"), "utf8");
     const manifest = await readFile(join(output, "manifest.json"), "utf8");
@@ -34,13 +36,24 @@ describe("static review site", () => {
       exportStaticSite(
         { ...manifest, publication: { fixture: false, containsSensitiveData: false } },
         output,
+        fixtureProject,
       ),
     ).rejects.toThrow(/synthetic fixtures/i);
     await expect(
       exportStaticSite(
         { ...manifest, publication: { fixture: true, containsSensitiveData: true } },
         output,
+        fixtureProject,
       ),
     ).rejects.toThrow(/sensitive/i);
+  });
+
+  it("refuses publication when the manifest does not match the project bytes", async () => {
+    const manifest = await fixtureManifest();
+    manifest.document.sha256 = "f".repeat(64);
+    const output = await mkdtemp(join(tmpdir(), "claim-ledger-site-stale-"));
+    await expect(exportStaticSite(manifest, output, fixtureProject)).rejects.toThrow(
+      /stale or mis-anchored/i,
+    );
   });
 });

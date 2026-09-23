@@ -43,7 +43,7 @@ describe("Claim Ledger CLI", () => {
     expect(await runCli(["verify", "--manifest", manifestPath, "--project", projectPath], io)).toBe(0);
 
     const site = join(directory, "site");
-    expect(await runCli(["export-site", "--manifest", manifestPath, "--out", site], io)).toBe(0);
+    expect(await runCli(["export-site", "--manifest", manifestPath, "--project", projectPath, "--out", site], io)).toBe(0);
     await access(join(site, "index.html"));
     const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as ReviewManifest;
     expect(manifest.reviewActions).toHaveLength(6);
