@@ -9,7 +9,7 @@
   "document": {
     "id": "document-demo-v1",
     "role": "document",
-    "name": "draft.md",
+    "name": "northstar-termination-memo.md",
     "mediaType": "text/markdown",
     "byteLength": 208,
     "sha256": "7a39d2a0f5d70e6039bdcd4ff72811d4ef8203c8c29175d8bbd81cc239ae1c07"
@@ -18,7 +18,7 @@
     {
       "id": "source-agreement-v1",
       "role": "source",
-      "name": "source.md",
+      "name": "synthetic-services-agreement.md",
       "mediaType": "text/markdown",
       "byteLength": 251,
       "sha256": "a4e51ca19d2279b4446458f371a86367ce210a4e1888382fed3de1573ae67883"
@@ -139,7 +139,7 @@
       "decision": "approve",
       "reason": "Claim wording and draft origin reviewed.",
       "reviewer": {
-        "displayName": "Demo reviewer",
+        "displayName": "Sample reviewer",
         "identityAssurance": "self-asserted"
       },
       "at": "2026-09-23T09:00:01.000Z",
@@ -159,7 +159,7 @@
       "decision": "approve",
       "reason": "Claim wording and draft origin reviewed.",
       "reviewer": {
-        "displayName": "Demo reviewer",
+        "displayName": "Sample reviewer",
         "identityAssurance": "self-asserted"
       },
       "at": "2026-09-23T09:00:02.000Z",
@@ -179,7 +179,7 @@
       "decision": "approve",
       "reason": "Evidence span and automated relation assessment reviewed.",
       "reviewer": {
-        "displayName": "Demo reviewer",
+        "displayName": "Sample reviewer",
         "identityAssurance": "self-asserted"
       },
       "at": "2026-09-23T09:00:03.000Z",
@@ -199,7 +199,7 @@
       "decision": "approve",
       "reason": "Evidence span and automated relation assessment reviewed.",
       "reviewer": {
-        "displayName": "Demo reviewer",
+        "displayName": "Sample reviewer",
         "identityAssurance": "self-asserted"
       },
       "at": "2026-09-23T09:00:04.000Z",
@@ -219,7 +219,7 @@
       "decision": "approve",
       "reason": "Claim relationship reviewed.",
       "reviewer": {
-        "displayName": "Demo reviewer",
+        "displayName": "Sample reviewer",
         "identityAssurance": "self-asserted"
       },
       "at": "2026-09-23T09:00:05.000Z",
@@ -239,11 +239,11 @@
       "decision": "approve",
       "reason": "All required review subjects are approved or explicitly waived.",
       "reviewer": {
-        "displayName": "Demo reviewer",
+        "displayName": "Sample reviewer",
         "identityAssurance": "self-asserted"
       },
       "at": "2026-09-23T09:00:06.000Z",
-      "boundSubjectSha256": "81eaf3ca22fc910d6642326929671d9c399cb293b34293f61813d4e306b0f892",
+      "boundSubjectSha256": "bc01512c09a5b3d5ca8dea691674fe135d809bae712867456c61c21951240279",
       "boundDocumentSha256": "7a39d2a0f5d70e6039bdcd4ff72811d4ef8203c8c29175d8bbd81cc239ae1c07",
       "boundSources": [
         {
@@ -255,7 +255,7 @@
   ],
   "certification": {
     "reviewActionId": "action-demo-006",
-    "reviewStateSha256": "b2a55db5c7dece1b794913c8a1e4ce588e8494d9a92969303f2cc4f5598fcc87",
+    "reviewStateSha256": "bb1ec8e94590cc5fd871ad15ce913619344ea40175ec39432ab25357d5379484",
     "scope": "The reviewer completed the recorded review actions for the exact artifact versions in this manifest."
   },
   "toolchain": {

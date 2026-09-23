@@ -9,7 +9,7 @@
   "document": {
     "id": "document-demo-v1",
     "role": "document",
-    "name": "draft.md",
+    "name": "northstar-termination-memo.md",
     "mediaType": "text/markdown",
     "byteLength": 208,
     "sha256": "7a39d2a0f5d70e6039bdcd4ff72811d4ef8203c8c29175d8bbd81cc239ae1c07"
@@ -18,7 +18,7 @@
     {
       "id": "source-agreement-v1",
       "role": "source",
-      "name": "source.md",
+      "name": "synthetic-services-agreement.md",
       "mediaType": "text/markdown",
       "byteLength": 251,
       "sha256": "a4e51ca19d2279b4446458f371a86367ce210a4e1888382fed3de1573ae67883"

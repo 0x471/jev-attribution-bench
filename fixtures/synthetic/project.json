@@ -7,13 +7,13 @@
   },
   "document": {
     "id": "document-demo-v1",
-    "path": "draft.md",
+    "path": "northstar-termination-memo.md",
     "mediaType": "text/markdown"
   },
   "sources": [
     {
       "id": "source-agreement-v1",
-      "path": "source.md",
+      "path": "synthetic-services-agreement.md",
       "mediaType": "text/markdown"
     }
   ],

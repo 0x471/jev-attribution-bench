@@ -25,7 +25,7 @@ export async function buildCertifiedDemo(outputDirectory: string): Promise<Revie
     now: () => new Date(buildTime),
   });
 
-  const reviewer = { displayName: "Demo reviewer", identityAssurance: "self-asserted" as const };
+  const reviewer = { displayName: "Sample reviewer", identityAssurance: "self-asserted" as const };
   const subjects: Array<[ReviewSubjectType, string, string]> = [];
   for (const claim of manifest.claims) {
     subjects.push(["claim", claim.id, "Claim wording and draft origin reviewed."]);
