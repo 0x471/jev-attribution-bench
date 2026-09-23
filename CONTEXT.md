@@ -46,7 +46,7 @@ _Avoid_: Link, dependency
 ## Review
 
 **Automated Assessment**:
-A model-produced Evidence Relation with probabilities, confidence, model version, and rubric version.
+A checker-produced Evidence Relation with its confidence or score distribution, checker identity, and rubric version. It may come from deterministic fixture replay, a local model, or an optional hosted model.
 _Avoid_: Approval, verdict
 
 **Review Action**:

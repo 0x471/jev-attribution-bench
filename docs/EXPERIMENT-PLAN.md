@@ -12,8 +12,10 @@ at an acceptable reviewer-time cost?
 | Control | Draft, citations, exact source context, and citation-relation assessment |
 | Treatment | Control plus atomic Claims, Implicit Premises, Argument Edges, granular actions, and version invalidation |
 
-Both conditions use the same documents, evidence candidates, Jev model, rubric, reviewer pool,
-and randomized case order. The only intentional difference is the Claim Ledger structure.
+Both conditions use the same documents, evidence candidates, frozen Automated Assessments,
+rubric, reviewer pool, and randomized case order. The assessments are replayed from a reviewed
+fixture set in the first experiment, so provider availability and model variability cannot become
+confounds. The only intentional difference is the Claim Ledger structure.
 
 ## Dataset
 
@@ -40,16 +42,29 @@ and randomized case order. The only intentional difference is the Claim Ledger s
 - Number of automatically suggested items a reviewer reverses.
 - Deterministic stale-approval detection after artifact mutation.
 
-## Baselines and ablations
+## Provider-independent baselines and ablations
 
 1. Deterministic quote containment only.
-2. Quote containment plus Jev Evidence Relation.
+2. Quote containment plus the same frozen Evidence Relation assessment shown in both conditions.
 3. Condition 2 plus atomic Claims.
 4. Condition 3 plus Argument Edges.
 5. Full treatment plus exact-version Certification.
 
-This isolates what Jev adds, what decomposition adds, and what version binding adds. Do not
-attribute an end-to-end gain to Jev without the ablation.
+This isolates what decomposition and version binding add without requiring a hosted checker. Do
+not attribute an end-to-end gain to the checker because its assessments are held constant.
+
+## Separate checker study
+
+Checker quality is a different question and must not be mixed into the workflow experiment. After
+the gold Evidence Relations are frozen, compare any available checker against the same cases:
+
+1. deterministic quote containment;
+2. a reviewed local NLI candidate, if it passes licensing and resource review;
+3. Jev or another hosted typed classifier, only if access and data controls become available.
+
+Report the three-way confusion matrix, calibration, latency, memory, and failures. Do not select a
+replacement model merely because Jev is unavailable, and do not change checker outputs between the
+control and treatment arms of the workflow study.
 
 ## Statistical plan
 

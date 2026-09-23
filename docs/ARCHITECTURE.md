@@ -14,7 +14,7 @@
                 │        │        │
                 │        │        └── EvidenceRelationChecker
                 │        │              ├── Fixture adapter
-                │        │              └── Jev adapter
+                │        │              └── Optional model adapter
                 │        └── exact quote locator
                 └── candidate Evidence Spans
                          │
@@ -72,9 +72,10 @@ handling. A missing exact quote returns `fabricated` without crossing the model 
 check(input: RelationInput): Promise<AutomatedAssessment>
 ```
 
-This seam is real because v0 needs two adapters: deterministic fixture replay and Jev. The
-interface accepts only the small state needed for one local relation and returns no generated
-text.
+This seam keeps the review workflow independent from checker availability. V0 has deterministic
+fixture replay and an optional Jev adapter; a future local or hosted checker must satisfy the same
+contract. The interface accepts only the small state needed for one local relation and returns no
+generated text.
 
 ### `ReviewLedger`
 

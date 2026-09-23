@@ -16,7 +16,7 @@ project + exact artifact bytes
  deterministic quote check ──missing──► fabricated assessment
              │ exact
              ▼
- fixture replay or pinned Jev Choice
+ fixture replay or optional checker adapter
              │
              ▼
  unapproved manifest ──human actions──► optional exact-version Certification
@@ -51,9 +51,10 @@ Run `npm run check` from a clean checkout to reproduce this evidence.
 
 ## Deliberate non-results
 
-This commit contains no live Jev benchmark result. The adapter is implemented and contract-tested,
-but the CLI refuses a live run because sending text to TypeSafe requires approved account terms,
-an outbound-data preview, and enforceable budget controls.
+This commit contains no live model benchmark result. The Jev adapter is implemented and
+contract-tested, but provider access is not available and the CLI refuses a live run because
+sending text to any hosted checker also requires approved account terms, an outbound-data preview,
+and enforceable budget controls. Jev availability is not a blocker for the workflow experiment.
 The SDK reports input and output tokens but not price, so the manifest records token usage and does
 not invent an estimated dollar cost.
 
@@ -62,11 +63,13 @@ performance. The viewer is a read-only demonstration, not an authenticated revie
 
 ## Next evidence-producing milestone
 
-1. Review the rubric and the outbound text using only synthetic cases.
-2. Run an opt-in live adapter smoke test with a hard external budget.
-3. Freeze 12–20 gold base memos and their isolated-defect variants.
-4. Run the ablations in `EXPERIMENT-PLAN.md` without tuning on the evaluation split.
-5. Report paired effect sizes, bootstrap intervals, reviewer time, and every failure receipt.
+1. Freeze 12–20 gold base memos and their isolated-defect variants.
+2. Freeze one reviewed assessment set and replay it identically in both study conditions.
+3. Run the provider-independent workflow ablations in `EXPERIMENT-PLAN.md` without tuning on the
+   evaluation split.
+4. Report paired effect sizes, bootstrap intervals, reviewer time, and every failure receipt.
+5. Compare a local or hosted semantic checker only as a separate follow-up when access, terms, and
+   budget controls are available.
 6. Decide whether to build, narrow, or stop before adding automatic claim extraction or document
    ingestion.
 
@@ -74,5 +77,6 @@ performance. The viewer is a read-only demonstration, not an authenticated revie
 
 - personal GitHub remote and Pages base path;
 - open-source license;
-- TypeSafe account, retention/region policy, prohibited-data rule, and spend cap;
+- optional checker account or local-model choice, retention/region policy, prohibited-data rule,
+  and spend cap;
 - final experiment reviewers and gold-label owners.

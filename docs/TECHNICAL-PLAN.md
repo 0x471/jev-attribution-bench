@@ -21,7 +21,7 @@ citation checker already solves that problem.
 2. A Claim always points to an Anchor in one Document Version.
 3. An Evidence Span always points to an Anchor in one Source Version.
 4. Exact quote containment is checked in code, never delegated to a model.
-5. Jev produces an Automated Assessment, never a human Review Action.
+5. A checker produces an Automated Assessment, never a human Review Action.
 6. No confidence threshold may silently create human approval.
 7. Any changed Artifact digest invalidates document-level Certification in v0.
 8. Every model result records the versioned model ID, rubric version, probabilities, usage,
@@ -59,8 +59,9 @@ citation checker already solves that problem.
 ## 4. Technology choice
 
 - **Runtime:** Node.js 20+ and TypeScript in strict mode.
-- **Jev adapter:** `@typesafe-ai/sdk`, pinned to an exact package version.
-- **Model:** `jev-1.13.0`, never `jev-latest`, for reproducible experiments.
+- **Checker seam:** provider-neutral `EvidenceRelationChecker` with deterministic fixture replay.
+- **Optional Jev adapter:** `@typesafe-ai/sdk` and `jev-1.13.0`, both pinned exactly, retained for a
+  later checker comparison if access becomes available.
 - **Persistence:** versioned JSON files; no database in v0.
 - **Validation:** JSON Schema at every import/export seam.
 - **Tests:** deterministic unit tests plus fixture-backed adapter contract tests; live model tests
@@ -71,13 +72,13 @@ citation checker already solves that problem.
 This keeps credentials and sensitive source material in a local process while allowing a
 shareable, credential-free Pages demonstration with synthetic fixtures.
 
-## 5. Jev's narrow role
+## 5. Automated checker's narrow role
 
 For each `(Claim, Evidence Span)` pair:
 
 1. Normalize whitespace and quotation marks in code.
 2. Locate the exact quotation in the complete Source Version.
-3. If absent, return `fabricated` without calling Jev.
+3. If absent, return `fabricated` without calling a semantic checker.
 4. Build a small state containing only the Claim and enough surrounding source context.
 5. Ask one `Choice` question with the options:
    - `supports`: the context states the claim or directly implies it;
@@ -86,15 +87,16 @@ For each `(Claim, Evidence Span)` pair:
 6. Persist the full probability distribution and confidence.
 7. Route every v0 assessment to a human. Confidence is displayed and measured, not used to approve.
 
-Jev must not generate claims, summarize whole documents, perform arithmetic, compare dates,
-or decide whether a multi-hop argument is globally valid. Those tasks are either deterministic
-code, a later generative adapter, or explicit human judgment.
+The checker must not generate claims, summarize whole documents, perform arithmetic, compare
+dates, or decide whether a multi-hop argument is globally valid. Those tasks are either
+deterministic code, a later generative adapter, or explicit human judgment.
 
 ## 6. Delivery sequence
 
 Implementation status is tracked in `IMPLEMENTATION-STATUS.md`. Milestones 0 and 1 are complete;
-the offline and adapter portions of Milestone 2 are complete. A live model run and the controlled
-experiment remain gated on the external decisions listed there.
+the offline and adapter portions of Milestone 2 are complete. The provider-independent controlled
+experiment does not wait for a live model run; any checker comparison remains gated on the
+external decisions listed there.
 
 ### Milestone 0 — foundation review
 
@@ -130,9 +132,10 @@ Required tests:
 - no model adapter can create a Review Action;
 - malformed manifests fail closed with actionable errors.
 
-### Milestone 2 — Jev evidence relation
+### Milestone 2 — evidence-relation checker seam
 
-Implement the Jev adapter behind the `EvidenceRelationChecker` interface.
+Implement deterministic replay and the optional Jev adapter behind the
+`EvidenceRelationChecker` interface.
 
 Required behavior:
 
@@ -147,7 +150,7 @@ Required behavior:
 Exit criteria:
 
 - the same cached input is replayable without a provider call;
-- live and fixture adapters pass the same contract test;
+- optional live and fixture adapters pass the same contract test;
 - provider failure produces a failure receipt, never a partial Certification.
 
 ### Milestone 3 — controlled experiment
@@ -211,6 +214,6 @@ Stop or narrow the project if any of these occur:
 - claim extraction misses enough material claims to erase the gain;
 - reviewers cannot reliably agree on Claims or Argument Edges;
 - median review time grows by more than 50% without a material defect-recall gain;
-- Jev is no better than a deterministic or local baseline on evidence relation;
+- no available semantic checker is better than a deterministic baseline on evidence relation;
 - privacy requirements prohibit sending even minimal source spans to the hosted endpoint;
 - the UI encourages reviewers to rubber-stamp high-confidence assessments.

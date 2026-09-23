@@ -2,16 +2,17 @@
 
 Claim Ledger is a local-first research PoC for reviewing the evidentiary structure of
 consequential documents. It maps hand-authored claims in a draft to exact source spans, asks a
-pinned Jev model for a narrow three-way evidence assessment, and records what a human reviewed
-for the exact artifact bytes involved.
+pluggable checker for a narrow three-way evidence assessment, and records what a human reviewed
+for the exact artifact bytes involved. The workflow and controlled experiment do not require
+access to any particular hosted model.
 
 The project tests one question:
 
 > Does atomic claim review, dependency review, and exact-version sign-off catch material defects
 > that ordinary citation checking misses?
 
-It does **not** certify truth, legal compliance, or clinical correctness. Jev produces an
-automated assessment; only a person can create a Review Action or Certification.
+It does **not** certify truth, legal compliance, or clinical correctness. A checker produces an
+Automated Assessment; only a person can create a Review Action or Certification.
 
 
 ## What works now
@@ -20,7 +21,9 @@ automated assessment; only a person can create a Review Action or Certification.
 - Hand-authored Claims, Evidence Spans, and Argument Edges validated by JSON Schema.
 - Unicode-code-point Anchors back to exact draft and source text.
 - Deterministic fabricated-quote detection before any model call.
-- Pinned `jev-1.13.0` three-way evidence assessment through `@typesafe-ai/sdk@0.6.0`.
+- Provider-neutral `EvidenceRelationChecker` seam with deterministic fixture replay.
+- Optional pinned `jev-1.13.0` adapter through `@typesafe-ai/sdk@0.6.0`, retained for future
+  comparison if access becomes available.
 - SDK timeout, retry, and cancellation configuration plus a content-addressed local cache.
 - Strict response validation and full probability/input/output-token capture.
 - Offline fixture replay for deterministic tests and public demonstrations.
@@ -82,12 +85,14 @@ npm run claim-ledger -- certify \
 
 Reviewer identity is explicitly `self-asserted` in v0; this is not a digital signature.
 
-## Pinned Jev adapter
+## Optional Jev adapter
 
-The `jev-1.13.0` adapter is implemented and contract-tested, but the CLI deliberately refuses live
-runs until data-handling terms, an outbound-data preview, and enforceable budget controls are
-approved. `.env` is ignored by Git for that later opt-in path. The browser viewer has no provider
-adapter or credential path, and no live Jev result is committed in this repository.
+The `jev-1.13.0` adapter is implemented and contract-tested, but Jev access is not a dependency of
+the PoC or its first controlled experiment. The CLI deliberately refuses live Jev runs while
+provider access is unavailable and until data-handling terms, an outbound-data preview, and
+enforceable budget controls are approved. `.env` is ignored by Git for any later opt-in path. The
+browser viewer has no provider adapter or credential path, and no live Jev result is committed in
+this repository.
 
 ## Preview the static fixture viewer
 
