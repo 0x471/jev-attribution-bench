@@ -131,8 +131,133 @@
       "proposedBy": "human"
     }
   ],
-  "reviewActions": [],
-  "certification": null,
+  "reviewActions": [
+    {
+      "id": "action-demo-001",
+      "subjectType": "claim",
+      "subjectId": "claim-notice",
+      "decision": "approve",
+      "reason": "Claim wording and draft origin reviewed.",
+      "reviewer": {
+        "displayName": "Demo reviewer",
+        "identityAssurance": "self-asserted"
+      },
+      "at": "2026-09-23T09:00:01.000Z",
+      "boundSubjectSha256": "745d85923849e2422f49b26127403f783cfcdad00ec2f398fff257b2490f38da",
+      "boundDocumentSha256": "7a39d2a0f5d70e6039bdcd4ff72811d4ef8203c8c29175d8bbd81cc239ae1c07",
+      "boundSources": [
+        {
+          "artifactId": "source-agreement-v1",
+          "sha256": "a4e51ca19d2279b4446458f371a86367ce210a4e1888382fed3de1573ae67883"
+        }
+      ]
+    },
+    {
+      "id": "action-demo-002",
+      "subjectType": "claim",
+      "subjectId": "claim-costs",
+      "decision": "approve",
+      "reason": "Claim wording and draft origin reviewed.",
+      "reviewer": {
+        "displayName": "Demo reviewer",
+        "identityAssurance": "self-asserted"
+      },
+      "at": "2026-09-23T09:00:02.000Z",
+      "boundSubjectSha256": "3dc4e5d93443966666bb864250aee1096db22a26f5cb6f1fa9220c9ac85e02b4",
+      "boundDocumentSha256": "7a39d2a0f5d70e6039bdcd4ff72811d4ef8203c8c29175d8bbd81cc239ae1c07",
+      "boundSources": [
+        {
+          "artifactId": "source-agreement-v1",
+          "sha256": "a4e51ca19d2279b4446458f371a86367ce210a4e1888382fed3de1573ae67883"
+        }
+      ]
+    },
+    {
+      "id": "action-demo-003",
+      "subjectType": "evidence-relation",
+      "subjectId": "relation-notice",
+      "decision": "approve",
+      "reason": "Evidence span and automated relation assessment reviewed.",
+      "reviewer": {
+        "displayName": "Demo reviewer",
+        "identityAssurance": "self-asserted"
+      },
+      "at": "2026-09-23T09:00:03.000Z",
+      "boundSubjectSha256": "227cb87fe7ce8e9469018f422d3ca42fff84595d4b26535f83ada953a7bdf4ce",
+      "boundDocumentSha256": "7a39d2a0f5d70e6039bdcd4ff72811d4ef8203c8c29175d8bbd81cc239ae1c07",
+      "boundSources": [
+        {
+          "artifactId": "source-agreement-v1",
+          "sha256": "a4e51ca19d2279b4446458f371a86367ce210a4e1888382fed3de1573ae67883"
+        }
+      ]
+    },
+    {
+      "id": "action-demo-004",
+      "subjectType": "evidence-relation",
+      "subjectId": "relation-costs",
+      "decision": "approve",
+      "reason": "Evidence span and automated relation assessment reviewed.",
+      "reviewer": {
+        "displayName": "Demo reviewer",
+        "identityAssurance": "self-asserted"
+      },
+      "at": "2026-09-23T09:00:04.000Z",
+      "boundSubjectSha256": "599c7e656bd34d6710e56c333eca514ab79350742a72863954932131911d0791",
+      "boundDocumentSha256": "7a39d2a0f5d70e6039bdcd4ff72811d4ef8203c8c29175d8bbd81cc239ae1c07",
+      "boundSources": [
+        {
+          "artifactId": "source-agreement-v1",
+          "sha256": "a4e51ca19d2279b4446458f371a86367ce210a4e1888382fed3de1573ae67883"
+        }
+      ]
+    },
+    {
+      "id": "action-demo-005",
+      "subjectType": "argument-edge",
+      "subjectId": "edge-notice-qualifies-costs",
+      "decision": "approve",
+      "reason": "Claim relationship reviewed.",
+      "reviewer": {
+        "displayName": "Demo reviewer",
+        "identityAssurance": "self-asserted"
+      },
+      "at": "2026-09-23T09:00:05.000Z",
+      "boundSubjectSha256": "d63dfc14e854a67cbbc0a13d4a551b59e4254db3d7bdc94ea942ef545d5d1578",
+      "boundDocumentSha256": "7a39d2a0f5d70e6039bdcd4ff72811d4ef8203c8c29175d8bbd81cc239ae1c07",
+      "boundSources": [
+        {
+          "artifactId": "source-agreement-v1",
+          "sha256": "a4e51ca19d2279b4446458f371a86367ce210a4e1888382fed3de1573ae67883"
+        }
+      ]
+    },
+    {
+      "id": "action-demo-006",
+      "subjectType": "document",
+      "subjectId": "document-demo-v1",
+      "decision": "approve",
+      "reason": "All required review subjects are approved or explicitly waived.",
+      "reviewer": {
+        "displayName": "Demo reviewer",
+        "identityAssurance": "self-asserted"
+      },
+      "at": "2026-09-23T09:00:06.000Z",
+      "boundSubjectSha256": "81eaf3ca22fc910d6642326929671d9c399cb293b34293f61813d4e306b0f892",
+      "boundDocumentSha256": "7a39d2a0f5d70e6039bdcd4ff72811d4ef8203c8c29175d8bbd81cc239ae1c07",
+      "boundSources": [
+        {
+          "artifactId": "source-agreement-v1",
+          "sha256": "a4e51ca19d2279b4446458f371a86367ce210a4e1888382fed3de1573ae67883"
+        }
+      ]
+    }
+  ],
+  "certification": {
+    "reviewActionId": "action-demo-006",
+    "reviewStateSha256": "b2a55db5c7dece1b794913c8a1e4ce588e8494d9a92969303f2cc4f5598fcc87",
+    "scope": "The reviewer completed the recorded review actions for the exact artifact versions in this manifest."
+  },
   "toolchain": {
     "claimLedgerVersion": "0.0.0",
     "nodeVersion": "v26.5.0",

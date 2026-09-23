@@ -12,6 +12,8 @@
   "scripts": {
     "check": "npm run typecheck && npm test && npm run validate:fixtures",
     "claim-ledger": "tsx --env-file-if-exists=.env src/cli.ts",
+    "demo:build": "tsx scripts/build-demo.ts review",
+    "demo:serve": "python3 -m http.server 8788 --bind 127.0.0.1 --directory review",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "validate:fixtures": "tsx scripts/validate-schema.ts schemas/project.schema.json fixtures/synthetic/project.json fixtures/synthetic/clinical/project.json && tsx scripts/validate-schema.ts schemas/review-manifest.schema.json fixtures/synthetic/manifest.json fixtures/synthetic/clinical/manifest.json review/manifest.json"

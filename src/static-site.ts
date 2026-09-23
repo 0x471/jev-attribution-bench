@@ -54,12 +54,15 @@ const INDEX_HTML = `<!doctype html>
       if (!response.ok) throw new Error('The review manifest could not be loaded.');
       const data = await response.json();
       document.querySelector('#review-id').textContent = data.reviewId;
+      const certificationAction = data.certification
+        ? data.reviewActions.find(action => action.id === data.certification.reviewActionId)
+        : null;
       document.querySelector('#certification-scope').textContent = data.certification
-        ? data.certification.scope + ' This does not establish truth, legal compliance, or clinical correctness.'
+        ? data.certification.scope + (certificationAction ? ' Recorded by '+certificationAction.reviewer.displayName+' with '+certificationAction.reviewer.identityAssurance+' identity.' : '') + ' This does not establish truth, legal compliance, or clinical correctness.'
         : 'No Certification is recorded. Certification would record completed human review of exact artifact versions; it would not establish truth, legal compliance, or clinical correctness.';
       const current = new Map();
       for (const action of data.reviewActions) current.set(action.subjectType + ':' + action.subjectId, action);
-      const approved = [...current.values()].filter(action => action.decision === 'approve').length;
+      const approved = [...current.values()].filter(action => action.subjectType !== 'document' && action.decision === 'approve').length;
       document.querySelector('#summary').innerHTML = [
         ['Claims', data.claims.length], ['Evidence checks', data.evidenceRelations.length],
         ['Human approvals', approved], ['Review sign-off', data.certification ? 'Recorded' : 'Not recorded']

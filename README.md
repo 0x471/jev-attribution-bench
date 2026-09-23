@@ -106,6 +106,14 @@ Open `http://127.0.0.1:8765`. The exporter refuses non-fixture manifests and any
 as containing sensitive data. A GitHub Pages workflow will be added only after you provide and
 review the personal repository remote.
 
+For the presentation-ready certified flow and three-minute talk track, see
+[`docs/DEMO.md`](./docs/DEMO.md). Build and serve it with:
+
+```sh
+npm run demo:build
+npm run demo:serve
+```
+
 ## Design and research
 
 - [Domain language](./CONTEXT.md)
