@@ -38,6 +38,7 @@ The automated suite covers:
 - missing-quote short-circuit without a checker call;
 - pinned Jev request shape, probability validation, retries/timeouts, and semantic cache keys;
 - malformed fixture/provider response rejection;
+- adversarial source instructions remain inert state and cannot alter the fixed rubric/model request;
 - Review Action requirements and unresolved-subject Certification refusal;
 - Certification invalidation after state or artifact changes;
 - JSON Schema and internal-reference validation;

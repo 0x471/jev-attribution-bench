@@ -33,7 +33,7 @@ describe("EvidenceRelationChecker seam", () => {
   });
 
   it("asks one pinned three-way Choice and preserves its complete distribution", async () => {
-    const systemOne = vi.fn(async () => ({
+    const systemOne = vi.fn(async (_request: unknown) => ({
       model: "jev-1.13.0",
       answers: {
         relation: {
@@ -164,5 +164,41 @@ describe("EvidenceRelationChecker seam", () => {
     );
 
     await expect(checker.check(input)).rejects.toThrow(/jev-latest.*jev-1\.13\.0/u);
+  });
+
+  it("keeps prompt-injection text inert inside state without changing the rubric or model", async () => {
+    const adversarial = JSON.parse(
+      await readFile(
+        new URL("../fixtures/adversarial/prompt-injection.json", import.meta.url),
+        "utf8",
+      ),
+    ) as { claim: string; context: string; expectedRelation: "supports" };
+    const systemOne = vi.fn(async (_request: unknown) => ({
+      model: "jev-1.13.0",
+      answers: {
+        relation: {
+          type: "choice" as const,
+          choice: adversarial.expectedRelation,
+          probabilities: { supports: 0.9, contradicts: 0.02, says_nothing: 0.08 },
+          confidence: 0.8,
+        },
+      },
+      usage: { input_tokens: 30, output_tokens: 3 },
+    }));
+    const checker = new JevEvidenceRelationChecker({ systemOne }, {
+      model: "jev-1.13.0",
+      rubricVersion: "evidence-relation-v1",
+    });
+
+    await checker.check({ ...input, claim: { ...input.claim, text: adversarial.claim }, context: adversarial.context });
+    const [request] = systemOne.mock.calls[0]! as unknown as [
+      { model: string; state: { claim: string; evidence_context: string }; questions: Record<string, unknown> },
+    ];
+    expect(request).toMatchObject({
+      model: "jev-1.13.0",
+      state: { claim: adversarial.claim, evidence_context: adversarial.context },
+    });
+    expect(JSON.stringify(request.questions)).not.toContain("IGNORE THE RUBRIC");
+    expect(Object.keys(request.questions)).toEqual(["relation"]);
   });
 });
