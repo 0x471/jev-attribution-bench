@@ -220,6 +220,10 @@ export async function verifyProjectArtifacts(
   const errors: string[] = [];
   const records = new Map<string, Awaited<ReturnType<ProjectArtifactStore["ingest"]>>>();
 
+  if (canonicalJson(manifest.publication) !== canonicalJson(project.publication)) {
+    errors.push("publication policy does not match the project declaration");
+  }
+
   for (const declaration of declarations) {
     const expected = expectedById.get(declaration.id);
     if (expected === undefined) {
@@ -236,6 +240,14 @@ export async function verifyProjectArtifacts(
       errors.push(
         `${declaration.id}: sha256 mismatch; expected ${result.expectedSha256}, got ${result.actualSha256}`,
       );
+    }
+    if (
+      expected.role !== record.artifact.role ||
+      expected.name !== record.artifact.name ||
+      expected.mediaType !== record.artifact.mediaType ||
+      expected.byteLength !== record.artifact.byteLength
+    ) {
+      errors.push(`${declaration.id}: artifact metadata does not match the project input`);
     }
   }
 
@@ -300,7 +312,11 @@ export async function verifyProjectArtifacts(
       ) {
         errors.push(`${input.id}: evidence relation fields do not match the project declaration`);
       } else if (expectedAnchor === null) {
-        if (relation.evidence.anchor !== null || relation.assessment.relation !== "fabricated") {
+        if (
+          relation.evidence.anchor !== null ||
+          relation.assessment.relation !== "fabricated" ||
+          relation.evidence.text !== input.quote
+        ) {
           errors.push(`${input.id}: missing quote must be recorded as fabricated`);
         }
       } else if (

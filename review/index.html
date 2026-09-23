@@ -34,6 +34,7 @@
   <header><div class="eyebrow">Evidence review</div><h1>Claim Ledger</h1><div class="muted" id="review-id">Loading review…</div></header>
   <main>
     <div class="notice"><strong>Synthetic review fixture</strong> — this contains no sensitive or production data. Automated assessments are not human approvals.</div>
+    <p class="notice" id="certification-scope">Certification records completed human review of exact artifact versions. It does not establish truth, legal compliance, or clinical correctness.</p>
     <div class="summary" id="summary"></div>
     <section id="claims" aria-live="polite"></section>
     <section id="edges" aria-live="polite"></section>
@@ -45,12 +46,15 @@
       if (!response.ok) throw new Error('The review manifest could not be loaded.');
       const data = await response.json();
       document.querySelector('#review-id').textContent = data.reviewId;
+      document.querySelector('#certification-scope').textContent = data.certification
+        ? data.certification.scope + ' This does not establish truth, legal compliance, or clinical correctness.'
+        : 'No Certification is recorded. Certification would record completed human review of exact artifact versions; it would not establish truth, legal compliance, or clinical correctness.';
       const current = new Map();
       for (const action of data.reviewActions) current.set(action.subjectType + ':' + action.subjectId, action);
       const approved = [...current.values()].filter(action => action.decision === 'approve').length;
       document.querySelector('#summary').innerHTML = [
         ['Claims', data.claims.length], ['Evidence checks', data.evidenceRelations.length],
-        ['Human approvals', approved], ['Certified', data.certification ? 'Yes' : 'No']
+        ['Human approvals', approved], ['Review sign-off', data.certification ? 'Recorded' : 'Not recorded']
       ].map(([label,value]) => '<div class="metric"><span class="muted">'+escapeHtml(label)+'</span><strong>'+escapeHtml(value)+'</strong></div>').join('');
       document.querySelector('#claims').innerHTML = data.claims.map(claim => {
         const evidence = data.evidenceRelations.filter(item => item.claimId === claim.id);

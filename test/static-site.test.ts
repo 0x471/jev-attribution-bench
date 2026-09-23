@@ -24,6 +24,7 @@ describe("static review site", () => {
     const html = await readFile(join(output, "index.html"), "utf8");
     const manifest = await readFile(join(output, "manifest.json"), "utf8");
     expect(html).toContain("Synthetic review fixture");
+    expect(html).toContain("does not establish truth, legal compliance, or clinical correctness");
     expect(html).toContain("manifest.json");
     expect(html).not.toContain("TYPESAFE_API_KEY");
     expect(html).not.toContain("typesafe.ai");

@@ -143,4 +143,26 @@ describe("EvidenceRelationChecker seam", () => {
 
     await expect(checker.check(input)).rejects.toThrow(/probabilities/i);
   });
+
+  it("rejects a provider response that resolves to an unpinned model alias", async () => {
+    const checker = new JevEvidenceRelationChecker(
+      {
+        systemOne: async () => ({
+          model: "jev-latest",
+          answers: {
+            relation: {
+              type: "choice",
+              choice: "supports",
+              probabilities: { supports: 0.9, contradicts: 0.02, says_nothing: 0.08 },
+              confidence: 0.8,
+            },
+          },
+          usage: { input_tokens: 10, output_tokens: 2 },
+        }),
+      },
+      { model: "jev-1.13.0", rubricVersion: "evidence-relation-v1" },
+    );
+
+    await expect(checker.check(input)).rejects.toThrow(/jev-latest.*jev-1\.13\.0/u);
+  });
 });

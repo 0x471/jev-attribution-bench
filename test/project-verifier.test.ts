@@ -57,6 +57,19 @@ describe("project artifact verification", () => {
     });
     expect(await verifyProjectArtifacts(projectPath, manifest)).toEqual({ valid: true, errors: [] });
 
+    const tamperedPolicy = structuredClone(manifest);
+    tamperedPolicy.publication.fixture = false;
+    expect((await verifyProjectArtifacts(projectPath, tamperedPolicy)).errors.join("\n")).toMatch(
+      /publication policy/i,
+    );
+
+    const tamperedMetadata = structuredClone(manifest);
+    tamperedMetadata.document.mediaType = "application/pdf" as "text/plain";
+    tamperedMetadata.document.byteLength += 1;
+    expect((await verifyProjectArtifacts(projectPath, tamperedMetadata)).errors.join("\n")).toMatch(
+      /artifact metadata/i,
+    );
+
     const tamperedAnchor = structuredClone(manifest);
     tamperedAnchor.claims[0]!.origin.start += 1;
     const anchorResult = await verifyProjectArtifacts(projectPath, tamperedAnchor);

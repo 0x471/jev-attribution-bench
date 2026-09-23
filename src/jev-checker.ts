@@ -135,7 +135,11 @@ export class JevEvidenceRelationChecker implements EvidenceRelationChecker {
     if (answer.confidence < 0 || answer.confidence > 1) {
       throw new Error("Provider confidence must be between 0 and 1");
     }
-    if (!response.model) throw new Error("Provider response did not identify its model");
+    if (response.model !== this.#options.model) {
+      throw new Error(
+        `Provider resolved model ${response.model || "<missing>"}; expected ${this.#options.model}`,
+      );
+    }
 
     return {
       relation: answer.choice,
