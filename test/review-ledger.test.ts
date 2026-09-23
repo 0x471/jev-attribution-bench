@@ -157,6 +157,7 @@ describe("ReviewLedger seam", () => {
     manifest = ledger.certify(manifest, reviewer);
     manifest.sources[0]!.sha256 = "8".repeat(64);
     expect(certificationStatus(manifest)).toMatchObject({ valid: false, reason: "artifact-changed" });
+    expect(() => ledger.certify(manifest, reviewer)).toThrow(/claim-1.*relation-1/s);
 
     for (const [subjectType, subjectId] of [
       ["claim", "claim-1"],
@@ -188,6 +189,22 @@ describe("ReviewLedger seam", () => {
     manifest.sources[1]!.sha256 = first;
 
     expect(certificationStatus(manifest)).toMatchObject({ valid: false, reason: "artifact-changed" });
+  });
+
+  it("requires re-review when an automated assessment or rubric changes", () => {
+    const ledger = new ReviewLedger({ now: () => new Date("2026-09-23T11:00:00.000Z") });
+    let manifest = baseManifest();
+    for (const [subjectType, subjectId] of [
+      ["claim", "claim-1"],
+      ["evidence-relation", "relation-1"],
+    ] as const) {
+      manifest = ledger.record(manifest, { subjectType, subjectId, decision: "approve", reason: null, reviewer });
+    }
+    manifest = ledger.certify(manifest, reviewer);
+    manifest.evidenceRelations[0]!.assessment.rubricVersion = "evidence-relation-v2";
+
+    expect(certificationStatus(manifest)).toMatchObject({ valid: false });
+    expect(() => ledger.certify(manifest, reviewer)).toThrow(/relation-1/);
   });
 
   it("requires a reason for a human waiver", () => {

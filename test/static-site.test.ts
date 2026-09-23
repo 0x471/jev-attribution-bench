@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import { exportStaticSite } from "../src/static-site.js";
 import type { ReviewManifest } from "../src/manifest.js";
+import { ReviewLedger } from "../src/review-ledger.js";
 
 async function fixtureManifest(): Promise<ReviewManifest> {
   return JSON.parse(
@@ -54,6 +55,21 @@ describe("static review site", () => {
     const output = await mkdtemp(join(tmpdir(), "claim-ledger-site-stale-"));
     await expect(exportStaticSite(manifest, output, fixtureProject)).rejects.toThrow(
       /stale or mis-anchored/i,
+    );
+  });
+
+  it("refuses to display a stale human action as current", async () => {
+    const manifest = new ReviewLedger().record(await fixtureManifest(), {
+      subjectType: "evidence-relation",
+      subjectId: "relation-notice",
+      decision: "approve",
+      reason: null,
+      reviewer: { displayName: "Reviewer", identityAssurance: "self-asserted" },
+    });
+    manifest.evidenceRelations[0]!.assessment.rubricVersion = "evidence-relation-v2";
+    const output = await mkdtemp(join(tmpdir(), "claim-ledger-site-stale-action-"));
+    await expect(exportStaticSite(manifest, output, fixtureProject)).rejects.toThrow(
+      /stale Review Actions/i,
     );
   });
 });

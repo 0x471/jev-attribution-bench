@@ -41,6 +41,7 @@ The automated suite covers:
 - Review Action requirements and unresolved-subject Certification refusal;
 - Certification invalidation after state or artifact changes;
 - JSON Schema and internal-reference validation;
+- documented semantic ownership for every persisted v0 field;
 - artifact and Anchor replay against the declared project files;
 - build, review, certify, verify, and static-export CLI integration;
 - safe failure receipts and synthetic-only publication gates.

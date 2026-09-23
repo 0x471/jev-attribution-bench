@@ -36,4 +36,15 @@ describe("ManifestExporter seam", () => {
       errors: ["evidence relation relation-notice references unknown claim claim-does-not-exist"],
     });
   });
+
+  it("rejects inconsistent fabricated and model assessment shapes", async () => {
+    const exporter = await ManifestExporter.create();
+    const fabricated = await fixture();
+    fabricated.evidenceRelations[0]!.assessment.relation = "fabricated";
+    expect(exporter.verify(fabricated).errors.join("\n")).toMatch(/fabricated assessment shape/i);
+
+    const incomplete = await fixture();
+    incomplete.evidenceRelations[0]!.assessment.probabilities = null;
+    expect(exporter.verify(incomplete).errors.join("\n")).toMatch(/incomplete model assessment/i);
+  });
 });

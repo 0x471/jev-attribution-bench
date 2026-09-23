@@ -77,6 +77,24 @@ function subjectExists(
   return manifest.argumentEdges.some((edge) => edge.id === subjectId);
 }
 
+function subjectDigest(
+  manifest: ReviewManifest,
+  subjectType: ReviewSubjectType,
+  subjectId: string,
+): string | null {
+  const subject =
+    subjectType === "document"
+      ? manifest.document.id === subjectId
+        ? manifest.document
+        : undefined
+      : subjectType === "claim"
+        ? manifest.claims.find((claim) => claim.id === subjectId)
+        : subjectType === "evidence-relation"
+          ? manifest.evidenceRelations.find((relation) => relation.id === subjectId)
+          : manifest.argumentEdges.find((edge) => edge.id === subjectId);
+  return subject === undefined ? null : sha256(canonicalJson(subject));
+}
+
 function currentAction(
   manifest: ReviewManifest,
   subjectType: ReviewSubjectType,
@@ -85,6 +103,22 @@ function currentAction(
   return manifest.reviewActions.findLast(
     (action) => action.subjectType === subjectType && action.subjectId === subjectId,
   );
+}
+
+function actionBindingsAreCurrent(manifest: ReviewManifest, action: ReviewAction): boolean {
+  return (
+    action.boundSubjectSha256 ===
+      subjectDigest(manifest, action.subjectType, action.subjectId) &&
+    action.boundDocumentSha256 === manifest.document.sha256 &&
+    sameBindings(action.boundSources, sourceBindings(manifest))
+  );
+}
+
+export function staleCurrentReviewSubjects(manifest: ReviewManifest): string[] {
+  return latestActions(manifest)
+    .filter((action) => !actionBindingsAreCurrent(manifest, action))
+    .map((action) => `${action.subjectType}:${action.subjectId}`)
+    .sort();
 }
 
 function unresolvedSubjects(manifest: ReviewManifest): string[] {
@@ -98,7 +132,9 @@ function unresolvedSubjects(manifest: ReviewManifest): string[] {
 
   return subjects.flatMap(([subjectType, subjectId]) => {
     const action = currentAction(manifest, subjectType, subjectId);
-    return action !== undefined && (action.decision === "approve" || action.decision === "waive")
+    return action !== undefined &&
+      actionBindingsAreCurrent(manifest, action) &&
+      (action.decision === "approve" || action.decision === "waive")
       ? []
       : [subjectId];
   });
@@ -107,11 +143,8 @@ function unresolvedSubjects(manifest: ReviewManifest): string[] {
 export function certificationStatus(manifest: ReviewManifest): CertificationStatus {
   if (manifest.certification === null) return { valid: false, reason: "not-certified" };
 
-  const expectedSourceBindings = sourceBindings(manifest);
   const bindingsAreCurrent = latestActions(manifest).every(
-    (action) =>
-      action.boundDocumentSha256 === manifest.document.sha256 &&
-      sameBindings(action.boundSources, expectedSourceBindings),
+    (action) => actionBindingsAreCurrent(manifest, action),
   );
   if (!bindingsAreCurrent) return { valid: false, reason: "artifact-changed" };
 
@@ -162,6 +195,7 @@ export class ReviewLedger {
       reason: input.reason,
       reviewer: { ...input.reviewer },
       at: this.#now().toISOString(),
+      boundSubjectSha256: subjectDigest(manifest, input.subjectType, input.subjectId)!,
       boundDocumentSha256: manifest.document.sha256,
       boundSources: sourceBindings(manifest),
     };

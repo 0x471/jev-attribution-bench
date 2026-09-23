@@ -111,6 +111,7 @@ review the personal repository remote.
 - [Domain language](./CONTEXT.md)
 - [Technical plan](./docs/TECHNICAL-PLAN.md)
 - [Architecture](./docs/ARCHITECTURE.md)
+- [Persisted-data dictionary](./docs/MANIFEST-DATA-DICTIONARY.md)
 - [Implementation status](./docs/IMPLEMENTATION-STATUS.md)
 - [Controlled experiment](./docs/EXPERIMENT-PLAN.md)
 - [Threat model](./docs/THREAT-MODEL.md)

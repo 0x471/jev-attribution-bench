@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { ManifestExporter } from "./manifest-exporter.js";
 import type { ReviewManifest } from "./manifest.js";
 import { verifyProjectArtifacts } from "./project-builder.js";
+import { staleCurrentReviewSubjects } from "./review-ledger.js";
 
 const INDEX_HTML = `<!doctype html>
 <html lang="en">
@@ -104,6 +105,10 @@ export async function exportStaticSite(
     throw new Error(
       `Refusing to publish stale or mis-anchored artifacts:\n${artifacts.errors.join("\n")}`,
     );
+  }
+  const staleSubjects = staleCurrentReviewSubjects(manifest);
+  if (staleSubjects.length > 0) {
+    throw new Error(`Refusing to publish stale Review Actions: ${staleSubjects.join(", ")}`);
   }
 
   await mkdir(outputDirectory, { recursive: true });

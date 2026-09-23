@@ -215,6 +215,7 @@
         "decision",
         "reviewer",
         "at",
+        "boundSubjectSha256",
         "boundDocumentSha256",
         "boundSources"
       ],
@@ -234,6 +235,7 @@
           }
         },
         "at": { "type": "string", "format": "date-time" },
+        "boundSubjectSha256": { "$ref": "#/$defs/sha256" },
         "boundDocumentSha256": { "$ref": "#/$defs/sha256" },
         "boundSources": {
           "type": "array",

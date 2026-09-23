@@ -63,6 +63,26 @@ describe("project artifact verification", () => {
     expect(anchorResult.valid).toBe(false);
     expect(anchorResult.errors.join("\n")).toMatch(/claim-1.*anchor/i);
 
+    const injected = structuredClone(manifest);
+    injected.claims.push({ ...structuredClone(injected.claims[0]!), id: "claim-injected" });
+    injected.evidenceRelations.push({
+      ...structuredClone(injected.evidenceRelations[0]!),
+      id: "evidence-injected",
+      claimId: "claim-injected",
+    });
+    injected.argumentEdges.push({
+      id: "edge-injected",
+      fromClaimId: "claim-1",
+      toClaimId: "claim-injected",
+      relation: "supports",
+      proposedBy: "human",
+    });
+    const injectionResult = await verifyProjectArtifacts(projectPath, injected);
+    expect(injectionResult.valid).toBe(false);
+    expect(injectionResult.errors.join("\n")).toMatch(/claim-injected.*absent from the project/i);
+    expect(injectionResult.errors.join("\n")).toMatch(/evidence-injected.*absent from the project/i);
+    expect(injectionResult.errors.join("\n")).toMatch(/argument edges do not match/i);
+
     await writeFile(join(directory, "source.md"), "Notice must be given 31 days in advance.\n");
     const result = await verifyProjectArtifacts(projectPath, manifest);
     expect(result.valid).toBe(false);

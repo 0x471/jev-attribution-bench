@@ -15,7 +15,7 @@ import {
   PINNED_JEV_MODEL,
   createJevCheckerFromEnvironment,
 } from "./jev-checker.js";
-import type { ArgumentEdge, ReviewManifest } from "./manifest.js";
+import { canonicalJson, type ArgumentEdge, type ReviewManifest } from "./manifest.js";
 
 const require = createRequire(import.meta.url);
 const addFormats = require("ajv-formats") as typeof import("ajv-formats").default;
@@ -246,6 +246,10 @@ export async function verifyProjectArtifacts(
   }
 
   const manifestClaimById = new Map(manifest.claims.map((claim) => [claim.id, claim]));
+  const projectClaimIds = new Set(project.claims.map((claim) => claim.id));
+  for (const claim of manifest.claims) {
+    if (!projectClaimIds.has(claim.id)) errors.push(`${claim.id}: claim is absent from the project`);
+  }
   const documentText = records.get(project.document.id)?.text;
   if (documentText !== undefined) {
     for (const input of project.claims) {
@@ -260,6 +264,13 @@ export async function verifyProjectArtifacts(
         claim.origin.textSha256 !== sha256(expectedAnchor.text)
       ) {
         errors.push(`${input.id}: claim anchor does not match the declared document text`);
+      } else if (
+        claim.text !== input.text ||
+        claim.kind !== input.kind ||
+        claim.proposedBy !== input.proposedBy ||
+        claim.proposalModel !== input.proposalModel
+      ) {
+        errors.push(`${input.id}: claim fields do not match the project declaration`);
       }
     }
   }
@@ -267,6 +278,14 @@ export async function verifyProjectArtifacts(
   const manifestRelationById = new Map(
     manifest.evidenceRelations.map((relation) => [relation.id, relation]),
   );
+  const projectRelationIds = new Set(
+    project.claims.flatMap((claim) => claim.evidence.map((evidence) => evidence.id)),
+  );
+  for (const relation of manifest.evidenceRelations) {
+    if (!projectRelationIds.has(relation.id)) {
+      errors.push(`${relation.id}: evidence relation is absent from the project`);
+    }
+  }
   for (const claimInput of project.claims) {
     for (const input of claimInput.evidence) {
       const relation = manifestRelationById.get(input.id);
@@ -274,6 +293,12 @@ export async function verifyProjectArtifacts(
       const expectedAnchor = sourceText ? locateNormalizedQuote(sourceText, input.quote) : null;
       if (relation === undefined) {
         errors.push(`${input.id}: evidence relation is absent from the manifest`);
+      } else if (
+        relation.claimId !== claimInput.id ||
+        relation.evidence.sourceArtifactId !== input.sourceId ||
+        relation.evidence.proposedQuote !== input.quote
+      ) {
+        errors.push(`${input.id}: evidence relation fields do not match the project declaration`);
       } else if (expectedAnchor === null) {
         if (relation.evidence.anchor !== null || relation.assessment.relation !== "fabricated") {
           errors.push(`${input.id}: missing quote must be recorded as fabricated`);
@@ -288,6 +313,12 @@ export async function verifyProjectArtifacts(
         errors.push(`${input.id}: evidence anchor does not match the declared source text`);
       }
     }
+  }
+
+  const manifestEdges = [...manifest.argumentEdges].sort((left, right) => left.id.localeCompare(right.id));
+  const projectEdges = [...project.argumentEdges].sort((left, right) => left.id.localeCompare(right.id));
+  if (canonicalJson(manifestEdges) !== canonicalJson(projectEdges)) {
+    errors.push("argument edges do not match the project declaration");
   }
 
   return { valid: errors.length === 0, errors };

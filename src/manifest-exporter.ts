@@ -110,6 +110,44 @@ export class ManifestExporter {
       if (relation.assessment.exactMatch !== (relation.evidence.anchor !== null)) {
         errors.push(`evidence relation ${relation.id} exact-match state is inconsistent`);
       }
+      const assessment = relation.assessment;
+      if (assessment.relation === "fabricated") {
+        if (
+          relation.evidence.anchor !== null ||
+          assessment.exactMatch ||
+          assessment.requestedModel !== null ||
+          assessment.resolvedModel !== null ||
+          assessment.probabilities !== null ||
+          assessment.confidence !== null ||
+          assessment.inputTokens !== null ||
+          assessment.outputTokens !== null
+        ) {
+          errors.push(
+            `evidence relation ${relation.id} has an invalid fabricated assessment shape`,
+          );
+        }
+      } else {
+        if (
+          relation.evidence.anchor === null ||
+          !assessment.exactMatch ||
+          assessment.requestedModel === null ||
+          assessment.resolvedModel === null ||
+          assessment.probabilities === null ||
+          assessment.confidence === null ||
+          assessment.inputTokens === null ||
+          assessment.outputTokens === null
+        ) {
+          errors.push(`evidence relation ${relation.id} has an incomplete model assessment`);
+        } else {
+          const probabilitySum = Object.values(assessment.probabilities).reduce(
+            (sum, probability) => sum + probability,
+            0,
+          );
+          if (Math.abs(probabilitySum - 1) > 0.001) {
+            errors.push(`evidence relation ${relation.id} probabilities do not sum to 1`);
+          }
+        }
+      }
     }
     for (const edge of manifest.argumentEdges) {
       if (!claimIds.has(edge.fromClaimId)) {

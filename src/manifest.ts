@@ -49,6 +49,7 @@ export interface ReviewAction {
   reason: string | null;
   reviewer: Reviewer;
   at: string;
+  boundSubjectSha256: string;
   boundDocumentSha256: string;
   boundSources: ArtifactBinding[];
 }
