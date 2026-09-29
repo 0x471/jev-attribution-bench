@@ -1,10 +1,11 @@
 # Decisions and open questions
 
-Updated: 2026-09-23
+Updated: 2026-09-24
 
 ## Decisions made for v0
 
-- **Claim Ledger** is the working name; a rename remains cheap before a remote exists.
+- **Jev Attribution Bench** is the repository name; **Claim Ledger** remains the name of the
+  included local human-review workflow.
 - Node.js 20 is the minimum runtime.
 - The PoC is domain-neutral and includes synthetic legal and clinical fixtures.
 - Inputs are UTF-8 Markdown/plain text with hand-authored Claims.
@@ -16,14 +17,20 @@ Updated: 2026-09-23
 - PDF, DOCX, OCR, DocJev, and automatic claim extraction remain deferred until the core experiment
   justifies them.
 
-## Required before the first live checker call
+## Resolved for the synthetic live smoke
 
-- Which provider account and data-processing terms apply?
-- Does that account have zero-data-retention, and in which region is processing performed?
-- Is direct provider access required, is an approved gateway allowed, or must inference be local?
-- What hard per-run and monthly spend limits should the CLI enforce?
-- What source content is prohibited from leaving the machine?
-- Which reviewed pricing source, if any, should be used for estimated dollar cost?
+- Use the native TypeSafe API with `jev-1.13.0` and the pinned JavaScript SDK.
+- Permit only synthetic, non-sensitive fixtures; real documents remain blocked.
+- Require explicit live opt-in and a positive per-run uncached-call cap; disable retries.
+- Estimate local cost from provider-reported input tokens and the official $0.042/M input-token
+  price; output tokens are currently free.
+
+## Required before any real document leaves the machine
+
+- Does the account have zero-data-retention, and in which region is processing performed?
+- What legal/account terms apply to the actual project and data controller?
+- Which document categories and fields are prohibited from leaving the machine?
+- What production hard-spend control is enforceable given that no public balance API is documented?
 
 ## Required before automatic claim proposals
 

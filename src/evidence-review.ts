@@ -51,6 +51,7 @@ export interface CheckerAssessment {
   inputTokens: number;
   outputTokens: number;
   runAt: string;
+  providerRequestId?: string;
 }
 
 export interface AutomatedAssessment {

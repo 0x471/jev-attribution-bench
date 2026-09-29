@@ -200,4 +200,25 @@ describe("project build workflow", () => {
       }),
     ).rejects.toThrow(/escapes the project directory/i);
   });
+
+  it("refuses live Jev processing for projects that are not synthetic and non-sensitive", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "claim-ledger-live-policy-"));
+    const original = JSON.parse(
+      await readFile(new URL("../fixtures/synthetic/project.json", import.meta.url), "utf8"),
+    ) as { publication: { fixture: boolean; containsSensitiveData: boolean } };
+    original.publication = { fixture: false, containsSensitiveData: true };
+    await writeFile(join(directory, "project.json"), JSON.stringify(original));
+
+    await expect(
+      buildReviewProject({
+        projectPath: join(directory, "project.json"),
+        checker: {
+          type: "jev",
+          cacheDirectory: join(directory, "cache"),
+          liveApproved: true,
+          maxProviderCalls: 1,
+        },
+      }),
+    ).rejects.toThrow(/synthetic, non-sensitive/u);
+  });
 });

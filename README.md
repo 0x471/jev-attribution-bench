@@ -1,10 +1,9 @@
-# Claim Ledger
+# Jev Attribution Bench
 
-Claim Ledger is a local-first research PoC for reviewing the evidentiary structure of
-consequential documents. It maps hand-authored claims in a draft to exact source spans, asks a
-pluggable checker for a narrow three-way evidence assessment, and records what a human reviewed
-for the exact artifact bytes involved. The workflow and controlled experiment do not require
-access to any particular hosted model.
+Jev Attribution Bench is a reproducible research repository for testing citation attribution and
+evidence-relation checking with Jev. It includes pinned AttributionBench and ContractNLI adapters,
+strict provenance and cost reporting, and a local-first human-review PoC named **Claim Ledger**.
+The workflow and controlled experiment do not require access to any particular hosted model.
 
 The project tests one question:
 
@@ -13,6 +12,7 @@ The project tests one question:
 
 It does **not** certify truth, legal compliance, or clinical correctness. A checker produces an
 Automated Assessment; only a person can create a Review Action or Certification.
+
 
 
 ## What works now
@@ -87,12 +87,25 @@ Reviewer identity is explicitly `self-asserted` in v0; this is not a digital sig
 
 ## Optional Jev adapter
 
-The `jev-1.13.0` adapter is implemented and contract-tested, but Jev access is not a dependency of
-the PoC or its first controlled experiment. The CLI deliberately refuses live Jev runs while
-provider access is unavailable and until data-handling terms, an outbound-data preview, and
-enforceable budget controls are approved. `.env` is ignored by Git for any later opt-in path. The
-browser viewer has no provider adapter or credential path, and no live Jev result is committed in
-this repository.
+The `jev-1.13.0` adapter is implemented, contract-tested, and live-tested with synthetic and public
+benchmark data, but
+Jev access is not a dependency of the PoC or its first controlled experiment. Live runs require an
+explicit `--allow-live true`, a positive hard call cap, a non-sensitive input, a pinned model and
+SDK, disabled retries, and an ignored local cache. Public benchmark data additionally requires
+`--allow-public-benchmark true` and complete source/license/hash provenance. `.env` is ignored by
+Git. A public benchmark that may contain public personal data also requires
+`--allow-public-personal-data true`; private or confidential data remains blocked. The browser
+viewer has no provider adapter or credential path, and no live response body or secret is committed
+in this repository.
+
+See the [bounded live smoke result](./docs/JEV-LIVE-SMOKE-2026-09-24.md) and the
+[current API verification](./docs/research/jev-api-verification-2026-09-24.md). The 15-case result
+is integration evidence on an authored development set, not a general model-quality claim. The
+[ContractNLI development evaluation](./docs/CONTRACTNLI-JEV-EVALUATION-2026-09-29.md) reports the
+larger three-way public result and its limitations. The separate
+[AttributionBench evaluation](./docs/ATTRIBUTIONBENCH-JEV-EVALUATION-2026-09-29.md) reports direct
+binary citation-attribution results on the full pinned in-domain and out-of-domain test files;
+these are deliberately not projected into ContractNLI labels.
 
 ## Preview the static fixture viewer
 
@@ -129,6 +142,12 @@ npm run demo:serve
 - [Controlled experiment](./docs/EXPERIMENT-PLAN.md)
 - [Threat model](./docs/THREAT-MODEL.md)
 - [Jev primary-source research](./docs/research/jev-foundations.md)
+- [Jev API verification](./docs/research/jev-api-verification-2026-09-24.md)
+- [Jev live smoke result](./docs/JEV-LIVE-SMOKE-2026-09-24.md)
+- [Public citation-evaluation dataset review](./docs/research/citation-evaluation-datasets-2026-09-29.md)
+- [ContractNLI Jev development evaluation](./docs/CONTRACTNLI-JEV-EVALUATION-2026-09-29.md)
+- [AttributionBench Jev ID/OOD evaluation](./docs/ATTRIBUTIONBENCH-JEV-EVALUATION-2026-09-29.md)
+- [AttributionBench integration research](./docs/research/attributionbench-integration-2026-09-29.md)
 
 Before making the repository public, choose an open-source license and confirm again that every
 published fixture is synthetic.

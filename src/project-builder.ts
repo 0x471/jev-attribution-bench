@@ -12,6 +12,7 @@ import { FixtureEvidenceRelationChecker } from "./fixture-checker.js";
 import {
   CachedEvidenceRelationChecker,
   FileAssessmentCache,
+  LimitedEvidenceRelationChecker,
   PINNED_JEV_MODEL,
   createJevCheckerFromEnvironment,
 } from "./jev-checker.js";
@@ -54,7 +55,14 @@ interface ProjectInput {
 
 export type CheckerConfiguration =
   | { type: "fixture"; assessmentsPath: string }
-  | { type: "jev"; cacheDirectory: string; rubricVersion?: string };
+  | {
+      type: "jev";
+      cacheDirectory: string;
+      liveApproved: true;
+      maxProviderCalls: number;
+      rubricVersion?: string;
+      timeoutMs?: number;
+    };
 
 export interface BuildReviewProjectOptions {
   projectPath: string;
@@ -133,6 +141,17 @@ export async function buildReviewProject(
 ): Promise<ReviewManifest> {
   const now = options.now ?? (() => new Date());
   const project = await readProject(options.projectPath);
+  if (options.checker.type === "jev" && options.checker.liveApproved !== true) {
+    throw new Error("A live Jev run must be explicitly approved.");
+  }
+  if (
+    options.checker.type === "jev" &&
+    (!project.publication.fixture || project.publication.containsSensitiveData)
+  ) {
+    throw new Error(
+      "Live Jev PoC runs are limited to synthetic, non-sensitive projects.",
+    );
+  }
   const projectDirectory = dirname(options.projectPath);
   const artifactStore = await ProjectArtifactStore.open(projectDirectory);
 
@@ -153,13 +172,19 @@ export async function buildReviewProject(
     options.checker.type === "fixture"
       ? await FixtureEvidenceRelationChecker.fromFile(options.checker.assessmentsPath, now)
       : new CachedEvidenceRelationChecker(
-          createJevCheckerFromEnvironment({
-            model: PINNED_JEV_MODEL,
-            rubricVersion,
-            now,
-          }),
+          new LimitedEvidenceRelationChecker(
+            createJevCheckerFromEnvironment({
+              model: PINNED_JEV_MODEL,
+              rubricVersion,
+              timeoutMs: options.checker.timeoutMs ?? 30_000,
+              // Retries can create extra billable attempts. Keep live PoC runs exact and bounded.
+              maxRetries: 0,
+              now,
+            }),
+            options.checker.maxProviderCalls,
+          ),
           new FileAssessmentCache(options.checker.cacheDirectory),
-          `${PINNED_JEV_MODEL}:${rubricVersion}:sdk-0.6.0`,
+          `${PINNED_JEV_MODEL}:${rubricVersion}:sdk-0.6.0:request-id-v1`,
         );
   const engine = new EvidenceReviewEngine(checker, {
     rubricVersion,

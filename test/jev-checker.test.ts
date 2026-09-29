@@ -8,6 +8,7 @@ import {
   CachedEvidenceRelationChecker,
   FileAssessmentCache,
   JevEvidenceRelationChecker,
+  LimitedEvidenceRelationChecker,
   type SystemOneClient,
 } from "../src/jev-checker.js";
 
@@ -44,6 +45,7 @@ describe("EvidenceRelationChecker seam", () => {
         },
       },
       usage: { input_tokens: 120, output_tokens: 12 },
+      providerRequestId: "req_test_123",
     }));
     const client: SystemOneClient = { systemOne };
     const checker = new JevEvidenceRelationChecker(client, {
@@ -64,6 +66,7 @@ describe("EvidenceRelationChecker seam", () => {
       inputTokens: 120,
       outputTokens: 12,
       runAt: "2026-09-23T10:00:00.000Z",
+      providerRequestId: "req_test_123",
     });
 
     expect(systemOne).toHaveBeenCalledWith(
@@ -119,6 +122,56 @@ describe("EvidenceRelationChecker seam", () => {
     expect(inner.check).toHaveBeenCalledTimes(2);
     const index = JSON.parse(await readFile(join(directory, "index.json"), "utf8")) as object;
     expect(Object.keys(index)).toHaveLength(2);
+  });
+
+  it("enforces a hard logical provider-call limit and counts failed attempts", async () => {
+    const inner = {
+      check: vi
+        .fn()
+        .mockRejectedValueOnce(new Error("provider unavailable"))
+        .mockResolvedValueOnce({
+          relation: "supports" as const,
+          requestedModel: "jev-1.13.0",
+          resolvedModel: "jev-1.13.0",
+          rubricVersion: "evidence-relation-v1",
+          probabilities: { supports: 0.9, contradicts: 0.02, says_nothing: 0.08 },
+          confidence: 0.8,
+          inputTokens: 10,
+          outputTokens: 2,
+          runAt: "2026-09-23T10:00:00.000Z",
+        }),
+    };
+    const limited = new LimitedEvidenceRelationChecker(inner, 1);
+
+    await expect(limited.check(input)).rejects.toThrow(/provider unavailable/u);
+    await expect(limited.check(input)).rejects.toThrow(/provider call limit of 1/u);
+    expect(inner.check).toHaveBeenCalledTimes(1);
+  });
+
+  it("places the cache outside the call limiter so cache hits spend no provider calls", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "claim-ledger-limited-cache-"));
+    const inner = {
+      check: vi.fn(async () => ({
+        relation: "supports" as const,
+        requestedModel: "jev-1.13.0",
+        resolvedModel: "jev-1.13.0",
+        rubricVersion: "evidence-relation-v1",
+        probabilities: { supports: 0.9, contradicts: 0.02, says_nothing: 0.08 },
+        confidence: 0.8,
+        inputTokens: 10,
+        outputTokens: 2,
+        runAt: "2026-09-23T10:00:00.000Z",
+      })),
+    };
+    const cached = new CachedEvidenceRelationChecker(
+      new LimitedEvidenceRelationChecker(inner, 1),
+      new FileAssessmentCache(directory),
+      "jev-1.13.0:evidence-relation-v1:sdk-0.6.0",
+    );
+
+    await cached.check(input);
+    await cached.check(input);
+    expect(inner.check).toHaveBeenCalledTimes(1);
   });
 
   it("rejects malformed provider probabilities rather than coercing them", async () => {

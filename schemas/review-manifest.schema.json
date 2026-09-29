@@ -179,6 +179,7 @@
         "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
         "inputTokens": { "type": ["integer", "null"], "minimum": 0 },
         "outputTokens": { "type": ["integer", "null"], "minimum": 0 },
+        "providerRequestId": { "type": "string", "minLength": 1 },
         "runAt": { "type": "string", "format": "date-time" }
       }
     },

@@ -33,7 +33,8 @@ Open `http://127.0.0.1:8788`. Everything shown is synthetic and the build makes 
 ## Technical points if asked
 
 - Node.js/TypeScript, JSON Schema, SHA-256, and Unicode-code-point Anchors.
-- `jev-1.13.0` and `@typesafe-ai/sdk@0.6.0` are pinned; live calls are policy-blocked today.
+- `jev-1.13.0` and `@typesafe-ai/sdk@0.6.0` are pinned. Live calls are available only through an
+  explicit, capped, synthetic-only local path; the checked-in demo still uses offline fixtures.
 - Missing quotations become `fabricated` without a model call.
 - Static export replays project policy, artifact metadata/bytes, Anchors, Claims, relations, graph,
   human-action freshness, and Certification integrity.

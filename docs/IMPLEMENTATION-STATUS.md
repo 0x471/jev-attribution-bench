@@ -1,6 +1,6 @@
 # Implementation status
 
-Updated: 2026-09-23
+Updated: 2026-09-29
 
 ## Completed vertical slice
 
@@ -46,20 +46,48 @@ The automated suite covers:
 - artifact and Anchor replay against the declared project files;
 - build, review, certify, verify, and static-export CLI integration;
 - safe failure receipts and synthetic-only publication gates.
+- explicit live Jev approval, synthetic/public-benchmark data classification, separate
+  public-benchmark and public-personal-data opt-ins, private/confidential-data rejection, hard
+  uncached-call limits, disabled retries, provider request-ID capture, and local token/cost
+  accounting;
+- a balanced 15-case synthetic Jev development runner with confusion matrix, macro-F1, Brier score,
+  latency, usage, and case-level receipts.
+- a pinned ContractNLI adapter with faithful document-level and derived citation-relation modes,
+  deterministic balanced/full sampling, source/license/hash provenance, grouped bootstrap analysis,
+  and a full 1,037-case development result.
+- a separate pinned AttributionBench binary checker and dataset lane with exact source hashes,
+  no-truncation preflight, ID/OOD preparation, source-line and query-group provenance, grouped
+  bootstrap intervals, source-level and selective metrics, and strict failure coverage.
 
 Run `npm run check` from a clean checkout to reproduce this evidence.
 
-## Deliberate non-results
+## Current live evidence and deliberate limitations
 
-This commit contains no live model benchmark result. The Jev adapter is implemented and
-contract-tested, but provider access is not available and the CLI refuses a live run because
-sending text to any hosted checker also requires approved account terms, an outbound-data preview,
-and enforceable budget controls. Jev availability is not a blocker for the workflow experiment.
-The SDK reports input and output tokens but not price, so the manifest records token usage and does
-not invent an estimated dollar cost.
+The live adapter completed a bounded synthetic smoke test on 2026-09-24. Two independent passes
+over 15 authored development cases produced 100% label accuracy and macro-F1, while an end-to-end
+two-relation project build produced a schema-valid unapproved manifest. This is integration
+evidence only: the cases are small, synthetic, developer-visible, and not independently
+adjudicated. See `JEV-LIVE-SMOKE-2026-09-24.md` for exact usage, latency, cost, and limitations.
+
+On 2026-09-29, the pinned adapter also completed the full 1,037-relation ContractNLI development
+split. It reached 72.4% accuracy and 66.0% macro-F1; says-nothing recall was only 53.4%, with 131
+high-confidence errors. This is public development evidence on 61 NDAs, not a held-out product
+claim. See `CONTRACTNLI-JEV-EVALUATION-2026-09-29.md` for the protocol, confidence intervals,
+cost, error analysis, and reproduction commands.
+
+The CLI still refuses real, sensitive, or non-fixture projects. The provider does not expose a
+documented balance API, so local cost is an estimate from response tokens and the current published
+price; the console is authoritative. Live checker access remains unnecessary for the controlled
+workflow experiment.
 
 The checked-in assessment probabilities are deterministic test fixtures, not measured model
 performance. The viewer is a read-only demonstration, not an authenticated review application.
+
+The 2026-09-29 AttributionBench run evaluated the full configured test files separately. Jev
+reached 70.8% conditional / 70.1% strict accuracy on the 1,610-row in-domain test and 81.2%
+conditional / 77.6% strict accuracy on the 1,686-row OOD test. ExpertQA was the weakest ID source
+at 56.7% accuracy, and the ID false-negative rate was 40.7%. This supports a human-review routing
+experiment, not autonomous approval. See `ATTRIBUTIONBENCH-JEV-EVALUATION-2026-09-29.md`.
 
 ## Next evidence-producing milestone
 
@@ -68,8 +96,8 @@ performance. The viewer is a read-only demonstration, not an authenticated revie
 3. Run the provider-independent workflow ablations in `EXPERIMENT-PLAN.md` without tuning on the
    evaluation split.
 4. Report paired effect sizes, bootstrap intervals, reviewer time, and every failure receipt.
-5. Compare a local or hosted semantic checker only as a separate follow-up when access, terms, and
-   budget controls are available.
+5. Add matched deterministic and frontier-model AttributionBench baselines, then manually label a
+   frozen error-analysis sample without tuning on the test files.
 6. Decide whether to build, narrow, or stop before adding automatic claim extraction or document
    ingestion.
 
@@ -77,6 +105,5 @@ performance. The viewer is a read-only demonstration, not an authenticated revie
 
 - personal GitHub remote and Pages base path;
 - open-source license;
-- optional checker account or local-model choice, retention/region policy, prohibited-data rule,
-  and spend cap;
+- checker retention/region policy, prohibited-data rule, and production spend control;
 - final experiment reviewers and gold-label owners.

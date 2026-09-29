@@ -65,6 +65,7 @@ item.
 | `assessment.probabilities` | checker adapter | Complete three-label distribution, or `null` for fabricated spans. |
 | `assessment.confidence` | checker adapter | Provider confidence as recorded; never an approval probability. |
 | `assessment.inputTokens` / `outputTokens` | checker adapter | Provider-reported usage, or `null` when no model was called. |
+| `assessment.providerRequestId` | checker adapter | Optional provider request ID for support and audit correlation; absent for offline fixtures. |
 | `assessment.runAt` | assessment clock | ISO timestamp at which the deterministic/model assessment completed. |
 | `argumentEdges[]` | project author | Project-declared Claim relationships, still requiring human review. |
 | `reviewActions[]` | ReviewLedger | Append-only human decisions. Automated modules cannot create these. |

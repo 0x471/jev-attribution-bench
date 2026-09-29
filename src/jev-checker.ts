@@ -14,7 +14,7 @@ const RELATIONS = ["supports", "contradicts", "says_nothing"] as const;
 export const PINNED_JEV_MODEL = "jev-1.13.0";
 type Relation = (typeof RELATIONS)[number];
 
-interface ChoiceAnswer {
+export interface SystemOneChoiceAnswer {
   type: "choice";
   choice: string;
   probabilities: Record<string, number>;
@@ -23,8 +23,9 @@ interface ChoiceAnswer {
 
 interface SystemOneResponse {
   model: string;
-  answers: { relation?: ChoiceAnswer };
+  answers: Record<string, SystemOneChoiceAnswer | undefined>;
   usage: { input_tokens?: number | null; output_tokens?: number | null };
+  providerRequestId?: string;
 }
 
 export interface SystemOneClient {
@@ -155,22 +156,59 @@ export class JevEvidenceRelationChecker implements EvidenceRelationChecker {
       inputTokens: response.usage.input_tokens ?? 0,
       outputTokens: response.usage.output_tokens ?? 0,
       runAt: this.#options.now().toISOString(),
+      ...(response.providerRequestId
+        ? { providerRequestId: response.providerRequestId }
+        : {}),
     };
   }
 }
 
+/**
+ * Counts logical provider calls before dispatch, including failed attempts. Place the
+ * content-addressed cache outside this wrapper so cache hits never consume the budget.
+ */
+export class LimitedEvidenceRelationChecker implements EvidenceRelationChecker {
+  readonly #inner: EvidenceRelationChecker;
+  readonly #maxCalls: number;
+  #calls = 0;
+
+  constructor(inner: EvidenceRelationChecker, maxCalls: number) {
+    if (!Number.isInteger(maxCalls) || maxCalls < 1) {
+      throw new Error("maxProviderCalls must be a positive integer");
+    }
+    this.#inner = inner;
+    this.#maxCalls = maxCalls;
+  }
+
+  async check(input: RelationInput): Promise<CheckerAssessment> {
+    if (this.#calls >= this.#maxCalls) {
+      throw new Error(`Jev provider call limit of ${this.#maxCalls} reached`);
+    }
+    this.#calls += 1;
+    return this.#inner.check(input);
+  }
+}
+
 export function createJevCheckerFromEnvironment(options: JevCheckerOptions): JevEvidenceRelationChecker {
+  return new JevEvidenceRelationChecker(createSystemOneClientFromEnvironment(), options);
+}
+
+export function createSystemOneClientFromEnvironment(): SystemOneClient {
   const apiKey = process.env.TYPESAFE_API_KEY;
   if (!apiKey) throw new Error("TYPESAFE_API_KEY is required for the live Jev checker");
-  const client = new TypeSafeClient({ apiKey });
-  const adapter: SystemOneClient = {
-    systemOne: async (request, requestOptions) =>
-      (await client.systemOne(
+  const client = new TypeSafeClient({ apiKey, logLevel: "off" });
+  return {
+    systemOne: async (request, requestOptions) => {
+      const { data, requestId } = await client.systemOne(
         request as Parameters<TypeSafeClient["systemOne"]>[0],
         requestOptions,
-      )) as SystemOneResponse,
+      ).withResponse();
+      return {
+        ...(data as SystemOneResponse),
+        ...(requestId ? { providerRequestId: requestId } : {}),
+      };
+    },
   };
-  return new JevEvidenceRelationChecker(adapter, options);
 }
 
 export interface AssessmentCache {

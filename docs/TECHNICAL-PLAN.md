@@ -94,9 +94,9 @@ deterministic code, a later generative adapter, or explicit human judgment.
 ## 6. Delivery sequence
 
 Implementation status is tracked in `IMPLEMENTATION-STATUS.md`. Milestones 0 and 1 are complete;
-the offline and adapter portions of Milestone 2 are complete. The provider-independent controlled
-experiment does not wait for a live model run; any checker comparison remains gated on the
-external decisions listed there.
+Milestone 2 now includes a bounded synthetic live run and a 15-case development evaluation. The
+provider-independent controlled experiment does not depend on live inference; any general checker
+quality claim remains gated on independently reviewed labels and a held-out set.
 
 ### Milestone 0 — foundation review
 

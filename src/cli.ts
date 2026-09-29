@@ -82,8 +82,17 @@ function safeBuildError(error: unknown): { code: string; message: string } {
   if (message.includes("TYPESAFE_API_KEY")) {
     return { code: "configuration-error", message: "The local Jev API key is not configured." };
   }
-  if (message.startsWith("Live Jev runs are disabled")) {
+  if (message.includes("explicitly approved") || message.includes("synthetic, non-sensitive")) {
     return { code: "policy-blocked", message };
+  }
+  if (message.includes("provider call limit")) {
+    return { code: "budget-exhausted", message };
+  }
+  if (message.startsWith("--") && message.includes("positive integer")) {
+    return { code: "invalid-option", message };
+  }
+  if (message.includes("options cannot be used") || message.includes("can only be used")) {
+    return { code: "invalid-option", message };
   }
   if (message.includes("ENOENT")) {
     return { code: "missing-input", message: "A required local input file was not found." };
@@ -117,13 +126,49 @@ export async function runCli(args: string[], io: CliIo = defaultIo): Promise<num
   try {
     if (command === "build") {
       const options = flags(rest);
-      allowOnly(options, ["--project", "--checker", "--assessments", "--out", "--cache", "--timestamp"]);
+      allowOnly(options, [
+        "--project",
+        "--checker",
+        "--assessments",
+        "--out",
+        "--cache",
+        "--timestamp",
+        "--allow-live",
+        "--max-provider-calls",
+        "--timeout-ms",
+      ]);
       const output = required(options, "--out");
       try {
         const checker = required(options, "--checker");
+        if (
+          checker === "fixture" &&
+          ["--allow-live", "--max-provider-calls", "--timeout-ms", "--cache"].some((name) =>
+            options.has(name),
+          )
+        ) {
+          throw new Error("Live-provider options cannot be used with the fixture checker.");
+        }
         if (checker === "jev") {
-          throw new Error(
-            "Live Jev runs are disabled until data-handling, outbound-preview, and budget controls are approved.",
+          if (options.has("--assessments")) {
+            throw new Error("--assessments can only be used with the fixture checker.");
+          }
+          if (options.get("--allow-live") !== "true") {
+            throw new Error(
+              "A live Jev run must be explicitly approved with --allow-live true.",
+            );
+          }
+          const rawMaxCalls = required(options, "--max-provider-calls");
+          const maxProviderCalls = Number(rawMaxCalls);
+          if (!Number.isInteger(maxProviderCalls) || maxProviderCalls < 1) {
+            throw new Error("--max-provider-calls must be a positive integer");
+          }
+          const rawTimeout = options.get("--timeout-ms") ?? "30000";
+          const timeoutMs = Number(rawTimeout);
+          if (!Number.isInteger(timeoutMs) || timeoutMs < 1) {
+            throw new Error("--timeout-ms must be a positive integer");
+          }
+          io.stdout(
+            `Live Jev enabled for a synthetic, non-sensitive fixture; at most ${maxProviderCalls} uncached provider call${maxProviderCalls === 1 ? "" : "s"}, with retries disabled.`,
           );
         }
         const projectPath = required(options, "--project");
@@ -138,6 +183,9 @@ export async function runCli(args: string[], io: CliIo = defaultIo): Promise<num
                 ? {
                     type: "jev",
                     cacheDirectory: options.get("--cache") ?? ".cache/assessments",
+                    liveApproved: true,
+                    maxProviderCalls: Number(required(options, "--max-provider-calls")),
+                    timeoutMs: Number(options.get("--timeout-ms") ?? "30000"),
                   }
                 : (() => {
                     throw new Error(`Unknown checker ${checker}`);

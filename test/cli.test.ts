@@ -67,4 +67,38 @@ describe("Claim Ledger CLI", () => {
     expect(receipt).not.toContain("Northstar");
     expect(receipt).not.toContain("TYPESAFE_API_KEY");
   });
+
+  it("requires explicit live approval and a bounded Jev call budget", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "claim-ledger-cli-jev-policy-"));
+    const projectPath = join(fixtureDirectory, "project.json");
+    const output = join(directory, "manifest.json");
+    const messages: string[] = [];
+    const io = {
+      stdout: (message: string) => messages.push(message),
+      stderr: (message: string) => messages.push(message),
+    };
+
+    expect(
+      await runCli(
+        [
+          "build", "--project", projectPath, "--checker", "jev", "--out", output,
+          "--max-provider-calls", "2",
+        ],
+        io,
+      ),
+    ).toBe(1);
+    expect(messages.at(-1)).toMatch(/explicitly approved/u);
+
+    messages.length = 0;
+    expect(
+      await runCli(
+        [
+          "build", "--project", projectPath, "--checker", "jev", "--out", output,
+          "--allow-live", "true", "--max-provider-calls", "0",
+        ],
+        io,
+      ),
+    ).toBe(1);
+    expect(messages.at(-1)).toMatch(/positive integer/u);
+  });
 });
